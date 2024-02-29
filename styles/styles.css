@@ -350,6 +350,27 @@ section {
 .about-stats .progress-bars .progress-bar .progress-con .progress .linux {
   width: 85%;
 }
+.about-stats .progress-bars .progress-bar .progress-con .progress .pytorch {
+  width: 85%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .tensorflow {
+  width: 80%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .transformers {
+  width: 85%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .kafka {
+  width: 80%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .lxd {
+  width: 70%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .pi {
+  width: 95%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .sql {
+  width: 80%;
+}
 
 .stat-title {
   text-transform: uppercase;
