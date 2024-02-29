@@ -311,20 +311,44 @@ section {
 .about-stats .progress-bars .progress-bar .progress-con .progress .html {
   width: 80%;
 }
-.about-stats .progress-bars .progress-bar .progress-con .progress .css {
+.about-stats .progress-bars .progress-bar .progress-con .progress .docker {
   width: 95%;
 }
-.about-stats .progress-bars .progress-bar .progress-con .progress .js {
-  width: 75%;
+.about-stats .progress-bars .progress-bar .progress-con .progress .golang {
+  width: 90%;
 }
-.about-stats .progress-bars .progress-bar .progress-con .progress .react {
+.about-stats .progress-bars .progress-bar .progress-con .progress .rust {
+  width: 15%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .bash {
   width: 60%;
 }
-.about-stats .progress-bars .progress-bar .progress-con .progress .node {
-  width: 87%;
-}
 .about-stats .progress-bars .progress-bar .progress-con .progress .python {
-  width: 70%;
+  width: 95%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .dvc {
+  width: 75%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .mlflow {
+  width: 85%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .kedro {
+  width: 75%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .ec2 {
+  width: 100%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .lambda {
+  width: 95%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .linux {
+  width: 85%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .s3 {
+  width: 80%;
+}
+.about-stats .progress-bars .progress-bar .progress-con .progress .linux {
+  width: 85%;
 }
 
 .stat-title {
