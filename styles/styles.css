@@ -272,58 +272,6 @@ section {
 .about-stats {
   padding-bottom: 4rem;
 }
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #333;
-  color: #fff;
-}
-
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h4.stat-title {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #ffc107;
-}
-
-.skill-category {
-  margin-bottom: 40px;
-}
-
-.skill-category h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  color: #fff;
-}
-
-.skill-list {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.skill-item {
-  background-color: #555;
-  color: #fff;
-  padding: 10px 20px;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-}
-
-.skill-item i {
-  margin-right: 10px;
-  font-size: 30px;
-}
-
 .about-stats .progress-bars {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
