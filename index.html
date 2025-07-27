@@ -2,630 +2,887 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio</title>
-    <link rel="stylesheet" href="styles/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>dev-hack95@terminal:~$ whoami</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Matrix Rain Background */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.03;
+        }
+
+        .matrix-bg canvas {
+            display: block;
+        }
+
+        /* Terminal Window */
+        .terminal-window {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin: 20px;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.2);
+        }
+
+        .terminal-header {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-button {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .close { background: #ff5f57; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #28ca42; }
+
+        .terminal-title {
+            color: #fff;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .terminal-content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        /* Typing Animation */
+        .typing-text {
+            border-right: 2px solid #00ff41;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { border-color: #00ff41; }
+            51%, 100% { border-color: transparent; }
+        }
+
+        /* ASCII Art */
+        .ascii-art {
+            font-size: 10px;
+            line-height: 1;
+            color: #00ff41;
+            text-align: center;
+            margin: 20px 0;
+            white-space: pre;
+        }
+
+        /* Command Prompt */
+        .prompt {
+            color: #00ff41;
+            margin: 10px 0;
+        }
+
+        .prompt::before {
+            content: "dev-hack95@terminal:~$ ";
+            color: #ff6b6b;
+        }
+
+        /* Sections */
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: rgba(26, 26, 26, 0.8);
+        }
+
+        .section-header {
+            color: #ff6b6b;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header::before {
+            content: ">";
+            color: #00ff41;
+        }
+
+        /* Skills Grid */
+        .skills-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .skill-block {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .skill-block:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .skill-category {
+            color: #ff6b6b;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .skill-list {
+            color: #00ff41;
+            font-size: 12px;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .code-line {
+            margin: 2px 0;
+            white-space: pre;
+        }
+
+        .comment { color: #6a737d; }
+        .string { color: #79c0ff; }
+        .keyword { color: #ff7b72; }
+        .function { color: #d2a8ff; }
+        .variable { color: #ffa657; }
+
+        /* Projects */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .project-card {
+            background: #0d1117;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .project-card:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.2);
+        }
+
+        .project-title {
+            color: #ff6b6b;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .project-description {
+            color: #8b949e;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tech-tag {
+            background: #21262d;
+            color: #00ff41;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            border: 1px solid #333;
+        }
+
+        .project-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .project-links a {
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .project-links a:hover {
+            color: #00ff41;
+        }
+
+        /* Experience Section */
+        .experience-card {
+            background: #0d1117;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .experience-card:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .job-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .company-logo {
+            width: 40px;
+            height: 40px;
+            background: #21262d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .job-details h3 {
+            color: #ff6b6b;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .job-company {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .job-duration {
+            color: #6a737d;
+            font-size: 12px;
+        }
+
+        .job-description {
+            color: #8b949e;
+            font-size: 13px;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .job-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #21262d;
+            padding: 10px 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-online {
+            width: 8px;
+            height: 8px;
+            background: #00ff41;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Contact Links */
+        .contact-matrix {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .contact-link {
+            background: #0d1117;
+            border: 1px solid #333;
+            padding: 10px 15px;
+            border-radius: 4px;
+            color: #00ff41;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contact-link:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            color: #00ff41;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terminal-window {
+                margin: 10px;
+            }
+            
+            .terminal-content {
+                padding: 15px;
+            }
+            
+            .ascii-art {
+                font-size: 8px;
+            }
+            
+            .skills-matrix,
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Boot sequence */
+        .boot-sequence {
+            margin: 20px 0;
+        }
+
+        .boot-line {
+            margin: 5px 0;
+            color: #6a737d;
+        }
+
+        .boot-line.success {
+            color: #00ff41;
+        }
+
+        .boot-line.warning {
+            color: #ffa657;
+        }
+
+        /* Glitch effect */
+        .glitch {
+            position: relative;
+            color: #00ff41;
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+    </style>
 </head>
-<body class="main-content">
-    <header class="container header active" id="home">
-        <div class="header-content">
-            <div class="left-header">
-                <div class="h-shape"></div>
-                <div class="image">
-                    <img src="img/portfolio-modified.png" alt="">
+<body>
+    <div class="matrix-bg">
+        <canvas id="matrix"></canvas>
+    </div>
+
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <div class="terminal-button close"></div>
+                <div class="terminal-button minimize"></div>
+                <div class="terminal-button maximize"></div>
+            </div>
+            <div class="terminal-title">dev-hack95@terminal: ~/portfolio</div>
+        </div>
+        
+        <div class="terminal-content">
+            <div class="boot-sequence">
+                <div class="boot-line">Loading developer profile...</div>
+                <div class="boot-line success">[OK] Neural networks initialized</div>
+                <div class="boot-line success">[OK] GPU cores loaded</div>
+                <div class="boot-line success">[OK] Low-latency optimizations enabled</div>
+                <div class="boot-line warning">[WARN] Coffee levels critically low</div>
+                <div class="boot-line success">[OK] System ready</div>
+            </div>
+
+            <div class="ascii-art">
+ ██████╗ ███████╗██╗   ██╗      ██╗  ██╗ █████╗  ██████╗██╗  ██╗ █████╗ ███████╗
+ ██╔══██╗██╔════╝██║   ██║      ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔════╝
+ ██║  ██║█████╗  ██║   ██║█████╗███████║███████║██║     █████╔╝ ╚██████║███████╗
+ ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══██║██╔══██║██║     ██╔═██╗  ╚═══██║╚════██║
+ ██████╔╝███████╗ ╚████╔╝       ██║  ██║██║  ██║╚██████╗██║  ██╗ █████╔╝███████║
+ ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚════╝ ╚══════╝
+            </div>
+
+            <div class="prompt typing-text">whoami</div>
+            
+            <div class="code-block">
+                <div class="code-line"><span class="keyword">class</span> <span class="function">Developer</span>:</div>
+                <div class="code-line">    <span class="keyword">def</span> <span class="function">__init__</span>(self):</div>
+                <div class="code-line">        self.name = <span class="string">"Saiprasad Toshatwad"</span></div>
+                <div class="code-line">        self.role = <span class="string">"Data Scientist | Backend Developer | ML Engineer"</span></div>
+                <div class="code-line">        self.current_position = <span class="string">"Software Development Engineer (SDE)"</span></div>
+                <div class="code-line">        self.company = <span class="string">"Cranberry Analytics"</span></div>
+                <div class="code-line">        self.location = <span class="string">"Pune, Maharashtra, India"</span></div>
+                <div class="code-line">        self.specialization = [</div>
+                <div class="code-line">            <span class="string">"Backend Infrastructure"</span>, <span class="string">"AI/ML Solutions"</span>,</div>
+                <div class="code-line">            <span class="string">"Data Science"</span><span class="string"></span></div>
+                <div class="code-line">        ]</div>
+                <div class="code-line">        self.interests = [</div>
+                <div class="code-line">            <span class="string">"GPU Specific Algorithmic Tuining"</span>, <span class="string">"Low-Latency Systems"</span>,</div>
+                <div class="code-line">            <span class="string">"FPGA Low-Latency Applications"</span>, <span class="string">"Coffee"</span>, <span class="string">"HomeLabs"</span></div>
+                <div class="code-line">        ]</div>
+            </div>
+
+            <div class="section">
+                <div class="section-header"><i class="fas fa-briefcase"></i> WORK_EXPERIENCE.log</div>
+                
+                <div class="experience-card">
+                    <div class="job-header">
+                        <div class="job-details">
+                            <h3>Software Development Engineer (SDE)</h3>
+                            <div class="job-company">Cranberry Analytics • Full-time</div>
+                            <div class="job-duration">Apr 2024 - Present • 1 yr 4 mos • Pune, Maharashtra, India • Hybrid</div>
+                        </div>
+                    </div>
+                    <div class="job-description">
+                        Spearheading the development and management of the company's backend infrastructure, ensuring seamless functionality and scalability. Focus on building AI solutions and optimizing system performance.
+                    </div>
+                    <div class="job-skills">
+                        <span class="tech-tag">Go</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Backend Development</span>
+                        <span class="tech-tag">Infrastructure</span>
+                        <span class="tech-tag">Scalability</span>
+                        <span class="tech-tag">AI/ML</span>
+                        <span class="tech-tag">Performance Optimization</span>
+                        <span class="tech-tag">Low-Power Computing</span>
+                        <span class="tech-tag">+10 skills</span>
+                    </div>
+                </div>
+
+                <div class="experience-card">
+                    <div class="job-header">
+                        <div class="job-details">
+                            <h3>Back End Developer</h3>
+                            <div class="job-company">AwesomeSuite • Internship</div>
+                            <div class="job-duration">May 2023 - Feb 2024 • 10 mos • India • Remote</div>
+                        </div>
+                    </div>
+                    <div class="job-description">
+                        Worked as a Golang developer, building scalable backend services and APIs. Gained experience in distributed systems and cloud technologies.
+                    </div>
+                    <div class="job-skills">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">AWS Lambda</span>
+                        <span class="tech-tag">Golang</span>
+                        <span class="tech-tag">Backend Development</span>
+                        <span class="tech-tag">+1 skill</span>
+                    </div>
+                </div>
+
+                <div class="experience-card">
+                    <div class="job-header">
+                        <div class="job-details">
+                            <h3>Data Science Intern</h3>
+                            <div class="job-company">Eaton • Internship</div>
+                            <div class="job-duration">Aug 2023 - Nov 2023 • 4 mos • Pune, Maharashtra, India • On-site</div>
+                        </div>
+                    </div>
+                    <div class="job-description">
+                        Team member in generative design team for a research project. Implemented deep learning on dwg, dxf files to automate the circuit design process. Worked on AI-driven solutions for electrical circuit automation.
+                    </div>
+                    <div class="job-skills">
+                        <span class="tech-tag">Generative AI</span>
+                        <span class="tech-tag">Data Science</span>
+                        <span class="tech-tag">Deep Learning</span>
+                        <span class="tech-tag">Automation</span>
+                        <span class="tech-tag">+6 skills</span>
+                    </div>
+                </div>
+
+                <div class="experience-card">
+                    <div class="job-header">
+                        <div class="job-details">
+                            <h3>Data Science Intern</h3>
+                            <div class="job-company">Digilytics System LLP • Internship</div>
+                            <div class="job-duration">Jul 2022 - Dec 2022 • 6 mos • Pune, Maharashtra, India</div>
+                        </div>
+                    </div>
+                    <div class="job-description">
+                        Created AutoML pipeline for machine learning training and deployments. Developed automated solutions for ML model lifecycle management and streamlined the deployment process.
+                    </div>
+                    <div class="job-skills">
+                        <span class="tech-tag">Pandas</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">AutoML</span>
+                        <span class="tech-tag">Machine Learning</span>
+                        <span class="tech-tag">MLOps</span>
+                        <span class="tech-tag">+5 skills</span>
+                    </div>
                 </div>
             </div>
-            <div class="right-header">
-                <h1 class="name">
-                    Hi, I'm <span>Saiprasad Toshatwad.</span>
-                    A Data Scientist.
-                </h1>
-                <p></p>
-                <ul>
-                    <li>I'm a Data Scientist, I love to build Transformers and GenAI Applications.</li>
-                    <li>I'm also into Backend Development, mostly using Golang as a backend language, and currently learning Rust.</li>
-                </ul>
-                <p></p>
-                <div class="btn-con">
-                    <a href="https://github.com/dev-hack95/portfolio/releases/download/betv1.0/Saiprasad.Toshatwad.pdf" class="main-btn">
-                        <span class="btn-text">Download CV</span>
-                        <span class="btn-icon"><i class="fas fa-download"></i></span>
+
+            <div class="section">
+                <div class="section-header"><i class="fas fa-microchip"></i> CORE_COMPETENCIES.exe</div>
+                <div class="skills-matrix">
+                    <div class="skill-block">
+                        <div class="skill-category">[LANGUAGES]</div>
+                        <div class="skill-list">
+                            Python • Go • C • Rust(Newbie) • Verilog(Newbie)<br>
+                            Assembly(Newbie) • HIP(AMD C++ Runtime API) • C++
+                        </div>
+                    </div>
+                    <div class="skill-block">
+                        <div class="skill-category">[AI/ML_STACK]</div>
+                        <div class="skill-list">
+                            TensorFlow • PyTorch • Scikit-Learn<br>
+                            XGBoost • NumPy • Pandas • OpenCV<br>
+                            AutoML • MLOps • Deep Learning
+                        </div>
+                    </div>
+                    <div class="skill-block">
+                        <div class="skill-category">[BACKEND_DEV]</div>
+                        <div class="skill-list">
+                            Golang • Gin/Gonic • Echo • Fiber<br>
+                            FastAPI • Flask • RESTful APIs<br>
+                            Microservices • Distributed Systems
+                        </div>
+                    </div>
+                    <div class="skill-block">
+                        <div class="skill-category">[CLOUD_&_DEVOPS]</div>
+                        <div class="skill-list">
+                            AWS • AWS Lambda • Docker • Kubernetes<br>
+                            Linux • GitHub Actions <br>
+                            Infrastructure as Code
+                        </div>
+                    </div>
+                    <div class="skill-block">
+                        <div class="skill-category">[DATABASES]</div>
+                        <div class="skill-list">
+                            PostgreSQL • Milvis  • Cassandra<br>
+                            Nebula(Knowledge Graph DB) • Redis • MQTT
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header"><i class="fas fa-code-branch"></i> SPECIALIZATIONS.config</div>
+                <div class="project-grid">
+                    <div class="project-card">
+                        <div class="project-title">
+                            <i class="fas fa-server"></i>
+                            Backend Infrastructure
+                        </div>
+                        <div class="project-description">
+                            Developing and managing scalable backend infrastructure with focus on 
+                            performance, reliability, and seamless functionality across distributed systems.
+                        </div>
+                        <div class="project-tech">
+                            <span class="tech-tag">Golang</span>
+                            <span class="tech-tag">Python</span>
+                            <span class="tech-tag">Microservices</span>
+                            <span class="tech-tag">APIs</span>
+                        </div>
+                    </div>
+                    
+                    <div class="project-card">
+                        <div class="project-title">
+                            <i class="fas fa-brain"></i>
+                            AI/ML Solutions
+                        </div>
+                        <div class="project-description">
+                            Creating AI solutions for LocalAI applications, implementing deep learning 
+                            and Generative AI models to automate workflows
+                        </div>
+                        <div class="project-tech">
+                            <span class="tech-tag">TensorFlow</span>
+                            <span class="tech-tag">PyTorch</span>
+                            <span class="tech-tag">AutoML</span>
+                            <span class="tech-tag">MLOps</span>
+                        </div>
+                    </div>
+                    
+                    <!-- <div class="project-card">
+                        <div class="project-title">
+                            <i class="fas fa-bolt"></i>
+                            Performance Optimization
+                        </div>
+                        <div class="project-description">
+                            Optimizing system performance for low-latency applications and 
+                            resource-constrained environments with focus on efficiency.
+                        </div>
+                        <div class="project-tech">
+                            <span class="tech-tag">C</span>
+                            <span class="tech-tag">Performance Tuning</span>
+                            <span class="tech-tag">Low-Latency</span>
+                            <span class="tech-tag">FPGA</span>
+                        </div>
+                    </div> -->
+
+                    <div class="project-card">
+                        <div class="project-title">
+                            <i class="fas fa-cloud"></i>
+                            Cloud & DevOps
+                        </div>
+                        <div class="project-description">
+                            Building scalable cloud solutions using AWS services, implementing 
+                            serverless architectures with Lambda, and managing containerized applications.
+                        </div>
+                        <div class="project-tech">
+                            <span class="tech-tag">AWS</span>
+                            <span class="tech-tag">Lambda</span>
+                            <span class="tech-tag">Docker</span>
+                            <span class="tech-tag">DevOps</span>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-title">
+                            <i class="fas fa-chart-line"></i>
+                            Data Science & Analytics
+                        </div>
+                        <div class="project-description">
+                            End-to-end data science projects from data collection to deployment, 
+                            specializing in predictive modeling and statistical analysis.
+                        </div>
+                        <div class="project-tech">
+                            <span class="tech-tag">Python</span>
+                            <span class="tech-tag">Pandas</span>
+                            <span class="tech-tag">Statistics</span>
+                            <span class="tech-tag">Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header"><i class="fas fa-terminal"></i> CONTACT_PROTOCOLS.init()</div>
+                <div class="contact-matrix">
+                    <a href="https://github.com/dev-hack95" class="contact-link">
+                        <i class="fab fa-github"></i>
+                        <span>github.com/dev-hack95</span>
+                    </a>
+                    <a href="https://www.linkedin.com/in/saiprasad-toshatwad-a75449206/" class="contact-link">
+                        <i class="fab fa-linkedin"></i>
+                        <span>LinkedIn Profile</span>
+                    </a>
+                    <a href="mailto:saiprasadtoshatwad@gmail.com" class="contact-link">
+                        <i class="fas fa-envelope"></i>
+                        <span>saiprasadtoshatwad@gmail.com</span>
                     </a>
                 </div>
             </div>
-        </div>
-    </header>
-    <main>
-        <section class="container about" id="about">
-            <div class="main-title">
-                <h2>About <span>me</span><span class="bg-text">my stats</span></h2>
-            </div>
-            <div class="about-container">
-                <div class="left-about">
-                    <h4>Information About me</h4>
-                    <p>
-                        Passionate Data Scientist with more than 1 year of experience in building machine learning
-                        and backend application in various startups and big-tech companies <br /> <br /> Proficient in Python, Golang  and MLOps tools like Docker, Git, AWS, and MLflow.
-                        Strong background in Linux and Raspberrypi. Experienced in working on innovative projects and contributing to dynamic teams. Good at  tackling complex problems through data and machine learning. 
-                        Available for exciting opportunities in data science and software development.
-                    </p>
-                    <div class="btn-con">
-                        <a href="https://github.com/dev-hack95/portfolio/releases/download/betv1.0/Saiprasad.Toshatwad.pdf" class="main-btn">
-                            <span class="btn-text">Download CV</span>
-                            <span class="btn-icon"><i class="fas fa-download"></i></span>
-                        </a>
-                    </div>
-                </div>
-                <div class="right-about">
-                    <div class="about-item">
-                        <div class="abt-text">
-                            <p class="large-text">15+</p>
-                            <p class="small-text">Projects </p>
-                        </div>
-                    </div>
-                    <div class="about-item">
-                        <div class="abt-text">
-                            <p class="large-text">1+</p>
-                            <p class="small-text">Years of <br /> experience</p>
-                        </div>
-                    </div>
-                    <div class="about-item">
-                        <div class="abt-text">
-                            <p class="large-text">3+</p>
-                            <p class="small-text">Programming <br /> Languages</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="about-stats">
-                <h4 class="stat-title">Programming Languages</h4>
-                <div class="progress-bars">
-                    <div class="progress-bar">
-                        <p class="prog-title">Python</p>
-                        <div class="progress-con">
-                            <p class="prog-text">95%</p>
-                            <div class="progress">
-                                <span class="python"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Golang</p>
-                        <div class="progress-con">
-                            <p class="prog-text">90%</p>
-                            <div class="progress">
-                                <span class="golang"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Rust</p>
-                        <div class="progress-con">
-                            <p class="prog-text">15%</p>
-                            <div class="progress">
-                                <span class="rust"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">SQL(Mysql, PostgreSql)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="sql"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h4 class="stat-title">MLOps</h4>
-                <div class="progress-bars">
-                    <div class="progress-bar">
-                        <p class="prog-title">Docker</p>
-                        <div class="progress-con">
-                            <p class="prog-text">95%</p>
-                            <div class="progress">
-                                <span class="docker"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">DVC</p>
-                        <div class="progress-con">
-                            <p class="prog-text">75%</p>
-                            <div class="progress">
-                                <span class="dvc"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Mlflow</p>
-                        <div class="progress-con">
-                            <p class="prog-text">85%</p>
-                            <div class="progress">
-                                <span class="mlflow"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">S3</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="s3"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">AWS Lambda</p>
-                        <div class="progress-con">
-                            <p class="prog-text">95%</p>
-                            <div class="progress">
-                                <span class="lambda"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">AWS EC2</p>
-                        <div class="progress-con">
-                            <p class="prog-text">100%</p>
-                            <div class="progress">
-                                <span class="ec2"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">linux(Debian, Ubuntu, Raspbian)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">85%</p>
-                            <div class="progress">
-                                <span class="linux"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Kedro</p>
-                        <div class="progress-con">
-                            <p class="prog-text">75%</p>
-                            <div class="progress">
-                                <span class="kedro"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">GithubActions</p>
-                        <div class="progress-con">
-                            <p class="prog-text">75%</p>
-                            <div class="progress">
-                                <span class="kedro"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h4 class="stat-title">Data Science</h4>
-                <div class="progress-bars">
-                    <div class="progress-bar">
-                        <p class="prog-title">Pytorch</p>
-                        <div class="progress-con">
-                            <p class="prog-text">85%</p>
-                            <div class="progress">
-                                <span class="pytorch"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Tensorflow</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="tensorflow"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Visualisation(Matplotlib, Plotly, Seaborn)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="tensorflow"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Numerics(Pandas, Numpy)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="tensorflow"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">GenAI(Langchain, LlamaIndex)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="tensorflow"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Transformers</p>
-                        <div class="progress-con">
-                            <p class="prog-text">85%</p>
-                            <div class="progress">
-                                <span class="transformers"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h4 class="stat-title">Other Skills</h4>
-                <div class="progress-bars">
-                    <div class="progress-bar">
-                        <p class="prog-title">Apache Kafka</p>
-                        <div class="progress-con">
-                            <p class="prog-text">80%</p>
-                            <div class="progress">
-                                <span class="kafka"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Lxd Containers</p>
-                        <div class="progress-con">
-                            <p class="prog-text">70%</p>
-                            <div class="progress">
-                                <span class="lxd"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">Raspberry Pi</p>
-                        <div class="progress-con">
-                            <p class="prog-text">95%</p>
-                            <div class="progress">
-                                <span class="pi"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="progress-bar">
-                        <p class="prog-title">VectorDB(PineCone, Milvus, Chromadb)</p>
-                        <div class="progress-con">
-                            <p class="prog-text">70%</p>
-                            <div class="progress">
-                                <span class="lxd"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h4 class="stat-title">My Timeline</h4>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="tl-icon">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <p class="tl-duration">2024-Current</p>
-                    <h5>SDE<span> - Cranberry Analytics</span></h5>
-                    <p>
-                        Implemented highly performant and scalable systems using Golang for accelerated data computation processes.
-                        Conducted daily analytics, collaborating with team leads to design intuitive dashboards for actionable insights
-                    </p>
-                </div>
-                <div class="timeline-item">
-                    <div class="tl-icon">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <p class="tl-duration">2023-2024</p>
-                    <h5>Backend Developer<span> - AwesomeSuite</span></h5>
-                    <p>
-                        As a Golang Backend Engineer at AwesomeSuite, spearheading the development of cutting-edge APIs for SaaS applications.
-                        Leveraged AWS for seamless deployment across multiple development environments. Led the charge in API creation, backend
-                        optimization, and proficiently deployed services on AWS Lambda, while seamlessly integrating Langchain and Docker services to
-                        deliver exceptional results
-                    </p>
-                </div>
-                <div class="timeline-item">
-                    <div class="tl-icon">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <p class="tl-duration">2023-2023</p>
-                    <h5>Data Scientist<span> - Eaton</span></h5>
-                    <p>
-                        As Core team member in the Generative Design project at Eaton during my internship. Worked on various image-focused projects
-                        including Mask RCNN, Taxonomy, Dxf automation, demonstrating a profound dedication to innovation and effective problemsolving.
-                    </p>
-                </div>
-            </div>
-        </section>
-        <section class="container" id="portfolio">
-            <div class="main-title">
-                <h2>My <span>Portfolio</span><span class="bg-text">My Work</span></h2>
-            </div>
-            <p class="port-text">
-                Here is some of my work that I've done in various programming languages.
-            </p>
-            <div class="portfolios">
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/pub-sub.PNG" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/TextFlow2.0" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/pub-sub.PNG" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/TextFlowConsumer" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/textflow.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/TextFlow" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/haze-remover.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/haze_remover" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/intent analysis.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/Intent-Analysis" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/port1.jpg" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/loopar_backend" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/gymGuide.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/GymGuide360" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/go_ecommerce.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/e_commerce_backend" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/brunch.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/Brunch-Buddy" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/data science.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/delivery_time_prediction" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div> 
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/data science.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/Consignment-Pricing" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div> 
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/grophers.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/bookstore_api_backend" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="portfolio-item">
-                    <div class="image">
-                        <img src="img/grophers.png" alt="">
-                    </div>
-                    <div class="hover-items">
-                        <h3>Project Source</h3>
-                        <div class="icons">
-                            <a href="https://github.com/dev-hack95/Blog_posts_server" class="icon">
-                                <i class="fab fa-github"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div> 
-            </div>
-            </div>
-        </section>
-        <section class="container contact" id="contact">
-            <div class="contact-container">
-                <div class="main-title">
-                    <h2>Contact <span>Me</span><span class="bg-text">Contact</span></h2>
-                </div>
-                <div class="contact-content-con">
-                    <div class="left-contact">
-                        <h4>Contact me here</h4>
-                        <div class="contact-info">
-                            <div class="contact-item">
-                                <div class="icon">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>Location</span>
-                                </div>
-                                <p>
-                                    Pune, India
-                                </p>
-                            </div>
-                            <div class="contact-item">
-                                <div class="icon">
-                                    <i class="fas fa-envelope"></i>
-                                    <span>Email</span>
-                                </div>
-                                <p>
-                                    <span>saiprasadtoshatwad@gmail.com</span>
-                                </p>
-                            </div>
-                            <div class="contact-item">
-                                <div class="icon">
-                                    <i class="fas fa-user-graduate"></i>
-                                    <span>Education</span>
-                                </div>
-                                <p>
-                                    <span>VIIT Pune</span>
-                                </p>
-                            </div>
-                            <div class="contact-item">
-                                <div class="icon">
-                                    <i class="fas fa-user-graduate"></i>
-                                    <span>Mobile Number</span>
-                                </div>
-                                <p>
-                                    <span>9307400536</span>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="contact-icons">
-                            <div class="contact-icon">
-                                <a href="https://github.com/dev-hack95" target="_blank">
-                                    <i class="fab fa-github"></i>
-                                </a>
-                                <a href="https://www.linkedin.com/in/saiprasad-toshatwad-a75449206/">
-                                    <i class="fab fa-linkedin"></i>
-                                </a>                                
-                            </div>
-                        </div>
-                    </div>
-                    <!--
-                    <div class="right-contact">
-                        <form action="" class="contact-form">
-                            <div class="input-control i-c-2">
-                                <input type="text" required placeholder="YOUR NAME">
-                                <input type="email" required placeholder="YOUR EMAIL">
-                            </div>
-                            <div class="input-control">
-                                <input type="text" required placeholder="ENTER SUBJECT">
-                            </div>
-                            <div class="input-control">
-                                <textarea name="" id="" cols="15" rows="8" placeholder="Message Here..."></textarea>
-                            </div>
-                            <div class="submit-btn">
-                                <a href="#" class="main-btn">
-                                    <span class="btn-text">Download CV</span>
-                                    <span class="btn-icon"><i class="fas fa-download"></i></span>
-                                </a>
-                            </div>
-                        </form>
-                    </div> -->
-                </div>
-            </div>
-        </section>
-    </main>
 
-    <div class="controls">
-        <div class="control active-btn" data-id="home" >
-            <i class="fas fa-home"></i>
+            <div class="prompt">exit</div>
+            <div style="color: #6a737d; margin-top: 20px;">
+                Connection terminated. Remember: "The best code is the code that doesn't exist, 
+                but when it must exist, make it fast." - Anonymous Systems Programmer
+            </div>
         </div>
-        <div class="control" data-id="about">
-            <i class="fas fa-user"></i>
-        </div>
-        <div class="control" data-id="portfolio">
-            <i class="fas fa-briefcase"></i>
-        </div>
-        <!-- 
-        <div class="control" data-id="blogs">
-            <i class="far fa-newspaper"></i>
-        </div> -->
-        <div class="control" data-id="contact">
-            <i class="fas fa-envelope-open"></i>
+        
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-item">
+                    <div class="status-online"></div>
+                    <span>ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-code"></i>
+                    <span>1.2M+ lines committed</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-coffee"></i>
+                    <span>Coffee: 47%</span>
+                </div>
+            </div>
+            <div class="status-right">
+                <span>Last compile: SUCCESS • Uptime: 99.97%</span>
+            </div>
         </div>
     </div>
-    <div class="theme-btn">
-        <i class="fas fa-adjust"></i>
-    </div>
-    <script src="app.js"></script>
+
+    <script>
+
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px JetBrains Mono';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+    
+        let terminalText = '';
+        const terminalElement = document.querySelector('.typing-text');
+        
+        function typeText(text, element, delay = 100) {
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent = text.substring(0, i + 1);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                }
+            }, delay);
+        }
+
+
+        const bootLines = document.querySelectorAll('.boot-line');
+        bootLines.forEach((line, index) => {
+            setTimeout(() => {
+                line.style.opacity = '1';
+                line.style.transform = 'translateX(0)';
+            }, index * 300);
+        });
+
+
+        bootLines.forEach(line => {
+            line.style.opacity = '0';
+            line.style.transform = 'translateX(-20px)';
+            line.style.transition = 'all 0.3s ease';
+        });
+
+        const asciiArt = document.querySelector('.ascii-art');
+        asciiArt.addEventListener('mouseenter', () => {
+            asciiArt.classList.add('glitch');
+        });
+        asciiArt.addEventListener('mouseleave', () => {
+            asciiArt.classList.remove('glitch');
+        });
+
+        const statusMessages = [
+            'Optimizing neural pathways...',
+            'Compiling quantum algorithms...',
+            'Debugging the universe...',
+            'Refactoring reality.exe...',
+            'Training AI overlords...',
+            'Hacking the Gibson...'
+        ];
+
+        setInterval(() => {
+            const randomMsg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+            console.log(`%c${randomMsg}`, 'color: #00ff41; font-family: monospace;');
+        }, 10000);
+
+        let konamiCode = [];
+        const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+        
+        document.addEventListener('keydown', (e) => {
+            konamiCode.push(e.keyCode);
+            if (konamiCode.length > konamiSequence.length) {
+                konamiCode.shift();
+            }
+            
+            if (JSON.stringify(konamiCode) === JSON.stringify(konamiSequence)) {
+                document.body.style.filter = 'hue-rotate(180deg)';
+                setTimeout(() => {
+                    document.body.style.filter = 'none';
+                }, 3000);
+                console.log('%cEaster egg activated! Welcome to the dark side of the code.', 'color: #ff6b6b; font-size: 16px; font-family: monospace;');
+            }
+        });
+    </script>
 </body>
 </html>
+
