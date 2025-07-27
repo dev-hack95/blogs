@@ -1,4 +1,4 @@
-name: Deploy single static index.html to GitHub Pages
+name: Deploy static site to GitHub Pages
 
 on:
   push:
@@ -16,20 +16,24 @@ concurrency:
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Archive index.html to site.tar.gz
-        run: tar -czf site.tar.gz index.html
-
-      - name: Upload Pages artifact
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site.tar.gz
-
+          path: '.'
+          
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
 
 
