@@ -1,4 +1,4 @@
-name: Deploy single static file to GitHub Pages
+name: Deploy single static index.html to GitHub Pages
 
 on:
   push:
@@ -21,11 +21,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Upload GitHub Pages artifact
+      - name: Archive index.html to site.tar.gz
+        run: tar -czf site.tar.gz index.html
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: index.html
+          path: site.tar.gz
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
 
