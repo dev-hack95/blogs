@@ -1,888 +1,1033 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dev-hack95@terminal:~$ whoami</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>dev-hack95@terminal:~$ whoami</title>
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap");
 
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: #0a0a0a;
-            color: #00ff41;
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        /* Matrix Rain Background */
-        .matrix-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.03;
-        }
+    body {
+      font-family: "JetBrains Mono", monospace;
+      background: #0a0a0a;
+      color: #00ff41;
+      overflow-x: hidden;
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-        .matrix-bg canvas {
-            display: block;
-        }
+    /* Container to constrain width and center */
+    .container {
+      width: 100%;
+      max-width: 900px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+    }
 
-        /* Terminal Window */
-        .terminal-window {
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            margin: 20px;
-            box-shadow: 0 0 50px rgba(0, 255, 65, 0.2);
-        }
+    /* Matrix Rain Background */
+    .matrix-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.03;
+      user-select: none;
+    }
 
-        .terminal-header {
-            background: #2d2d2d;
-            padding: 10px 15px;
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .matrix-bg canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
 
-        .terminal-buttons {
-            display: flex;
-            gap: 8px;
-        }
+    /* Terminal Window */
+    .terminal-window {
+      background: linear-gradient(135deg, #121212, #1f1f1f);
+      border: 2px solid #00ff41;
+      border-radius: 12px;
+      box-shadow: 0 0 40px #00ff41cc, inset 0 0 10px #00ff41cc;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-height: 900px;
+    }
 
-        .terminal-button {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-        }
+    .terminal-header {
+      background: #111;
+      padding: 10px 20px;
+      border-bottom: 1px solid #00ff41;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        .close { background: #ff5f57; }
-        .minimize { background: #ffbd2e; }
-        .maximize { background: #28ca42; }
+    .terminal-buttons {
+      display: flex;
+      gap: 8px;
+    }
 
-        .terminal-title {
-            color: #fff;
-            font-size: 14px;
-            margin-left: 10px;
-        }
+    .terminal-button {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: 0 0 5px #000 inset;
+      cursor: pointer;
+      transition: filter 0.3s ease;
+    }
 
-        .terminal-content {
-            padding: 20px;
-            min-height: 400px;
-        }
+    .terminal-button:hover {
+      filter: brightness(1.4);
+    }
 
-        /* Typing Animation */
-        .typing-text {
-            border-right: 2px solid #00ff41;
-            animation: blink 1s infinite;
-        }
+    .close {
+      background: #ff5f57;
+    }
+    .minimize {
+      background: #ffbd2e;
+    }
+    .maximize {
+      background: #28ca42;
+    }
 
-        @keyframes blink {
-            0%, 50% { border-color: #00ff41; }
-            51%, 100% { border-color: transparent; }
-        }
+    .terminal-title {
+      color: #00ff41;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-shadow: 0 0 4px #00ff41aa;
+      user-select: none;
+    }
 
-        /* ASCII Art */
-        .ascii-art {
-            font-size: 10px;
-            line-height: 1;
-            color: #00ff41;
-            text-align: center;
-            margin: 20px 0;
-            white-space: pre;
-        }
+    .terminal-content {
+      padding: 20px 25px;
+      overflow-y: auto;
+      font-size: 14px;
+      flex-grow: 1;
+      line-height: 1.55;
+      scrollbar-width: thin;
+      scrollbar-color: #00ff41 #121212;
+    }
 
-        /* Command Prompt */
-        .prompt {
-            color: #00ff41;
-            margin: 10px 0;
-        }
+    .terminal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .terminal-content::-webkit-scrollbar-track {
+      background: #121212;
+    }
+    .terminal-content::-webkit-scrollbar-thumb {
+      background-color: #00ff41a0;
+      border-radius: 10px;
+      border: 2px solid #121212;
+    }
 
-        .prompt::before {
-            content: "dev-hack95@terminal:~$ ";
-            color: #ff6b6b;
-        }
+    /* Typing Animation */
+    .typing-text {
+      border-right: 2px solid #00ff41;
+      animation: blink 1s infinite;
+      font-weight: 600;
+      margin-top: 10px;
+      user-select: none;
+    }
 
-        /* Sections */
-        .section {
-            margin: 30px 0;
-            padding: 20px;
-            border: 1px solid #333;
-            border-radius: 4px;
-            background: rgba(26, 26, 26, 0.8);
-        }
+    @keyframes blink {
+      0%,
+      50% {
+        border-color: #00ff41;
+      }
+      51%,
+      100% {
+        border-color: transparent;
+      }
+    }
 
-        .section-header {
-            color: #ff6b6b;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    /* ASCII Art */
+    .ascii-art {
+      font-size: 10px;
+      line-height: 1;
+      color: #00ff41;
+      text-align: center;
+      margin: 20px 0 15px 0;
+      white-space: pre;
+      user-select: none;
+      text-shadow:
+        0 0 3px #00ff41,
+        0 0 6px #00ff41,
+        0 0 10px #00ff41;
+    }
 
-        .section-header::before {
-            content: ">";
-            color: #00ff41;
-        }
+    /* Command Prompt */
+    .prompt {
+      color: #00ff41;
+      margin: 10px 0 5px 0;
+      font-weight: 700;
+    }
 
-        /* Skills Grid */
-        .skills-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
+    .prompt::before {
+      content: "dev-hack95@terminal:~$ ";
+      color: #ff6b6b;
+      font-weight: 700;
+      user-select: none;
+    }
 
-        .skill-block {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 15px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
+    /* Sections */
+    .section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 1px solid #006621aa;
+      border-radius: 6px;
+      background: rgba(10, 10, 10, 0.9);
+      box-shadow: 0 0 10px #00ff41aa inset;
+    }
 
-        .skill-block:hover {
-            border-color: #00ff41;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
-            transform: translateY(-2px);
-        }
+    .section-header {
+      color: #ff6b6b;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+      text-shadow: 0 0 6px #ff6b6b;
+    }
 
-        .skill-category {
-            color: #ff6b6b;
-            font-weight: 700;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
+    .section-header::before {
+      content: ">";
+      color: #00ff41;
+      font-weight: 900;
+      text-shadow: 0 0 8px #00ff41;
+    }
 
-        .skill-list {
-            color: #00ff41;
-            font-size: 12px;
-        }
+    /* Skills Grid */
+    .skills-matrix {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin: 20px 0 0 0;
+    }
 
-        /* Code Block */
-        .code-block {
-            background: #0d1117;
-            border: 1px solid #333;
-            border-radius: 4px;
-            padding: 15px;
-            margin: 15px 0;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-        }
+    .skill-block {
+      background: #151515;
+      border: 1px solid #00ff41;
+      padding: 15px 20px;
+      border-radius: 6px;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 8px #00ff41cc inset;
+    }
 
-        .code-line {
-            margin: 2px 0;
-            white-space: pre;
-        }
+    .skill-block:hover {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 25px #ff6b6bcc, 0 0 15px #ff6b6bcc inset;
+      transform: translateY(-4px);
+    }
 
-        .comment { color: #6a737d; }
-        .string { color: #79c0ff; }
-        .keyword { color: #ff7b72; }
-        .function { color: #d2a8ff; }
-        .variable { color: #ffa657; }
+    .skill-category {
+      color: #ff6b6b;
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 15px;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 5px #ff6b6bcc;
+      user-select: none;
+    }
 
-        /* Projects */
-        .project-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
+    .skill-list {
+      color: #00ff41;
+      font-size: 13px;
+      line-height: 1.3;
+      letter-spacing: 0.04em;
+      user-select: text;
+    }
 
-        .project-card {
-            background: #0d1117;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+    /* Code Block */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid #00ff41;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 20px 0;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      box-shadow: inset 0 0 10px #00ff41aa;
+    }
 
-        .project-card:hover {
-            border-color: #00ff41;
-            box-shadow: 0 0 25px rgba(0, 255, 65, 0.2);
-        }
+    .code-line {
+      margin: 3px 0;
+      white-space: pre;
+    }
 
-        .project-title {
-            color: #ff6b6b;
-            font-weight: 700;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .comment {
+      color: #6a737d;
+    }
+    .string {
+      color: #79c0ff;
+    }
+    .keyword {
+      color: #ff7b72;
+      font-weight: 700;
+    }
+    .function {
+      color: #d2a8ff;
+    }
+    .variable {
+      color: #ffa657;
+    }
 
-        .project-description {
-            color: #8b949e;
-            font-size: 13px;
-            margin-bottom: 15px;
-        }
+    /* Projects */
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+      margin: 20px 0 0 0;
+    }
 
-        .project-tech {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
+    .project-card {
+      background: #121212;
+      border: 1px solid #00ff41;
+      border-radius: 8px;
+      padding: 20px 22px;
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow: inset 0 0 10px #00ff41bb;
+    }
 
-        .tech-tag {
-            background: #21262d;
-            color: #00ff41;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            border: 1px solid #333;
-        }
+    .project-card:hover {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 30px #ff6b6bcc, inset 0 0 15px #ff6b6bcc;
+      transform: translateY(-3px);
+    }
 
-        .project-links {
-            display: flex;
-            gap: 15px;
-        }
+    .project-title {
+      color: #ff6b6b;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 17px;
+      user-select: none;
+      text-shadow: 0 0 6px #ff6b6bbb;
+    }
 
-        .project-links a {
-            color: #58a6ff;
-            text-decoration: none;
-            font-size: 12px;
-            transition: color 0.3s ease;
-        }
+    .project-description {
+      color: #8b949e;
+      font-size: 13.5px;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
 
-        .project-links a:hover {
-            color: #00ff41;
-        }
+    .project-tech {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
 
-        /* Experience Section */
-        .experience-card {
-            background: #0d1117;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
+    .tech-tag {
+      background: #21262d;
+      color: #00ff41;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid #008f17;
+      letter-spacing: 0.03em;
+      user-select: text;
+    }
 
-        .experience-card:hover {
-            border-color: #00ff41;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
-        }
+    /* Experience Section */
+    .experience-card {
+      background: #121212;
+      border: 1px solid #00ff41;
+      border-radius: 8px;
+      padding: 20px 22px;
+      margin-bottom: 22px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 0 12px #00ff41bb;
+    }
 
-        .job-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+    .experience-card:hover {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 25px #ff6b6bcc, inset 0 0 15px #ff6b6bcc;
+      transform: translateY(-4px);
+    }
 
-        .company-logo {
-            width: 40px;
-            height: 40px;
-            background: #21262d;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #00ff41;
-        }
+    .job-header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
 
-        .job-details h3 {
-            color: #ff6b6b;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
+    .company-logo {
+      width: 44px;
+      height: 44px;
+      background: #21262d;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #00ff41;
+      font-size: 22px;
+      letter-spacing: 0.05em;
+      user-select: none;
+      text-shadow:
+        0 0 5px #00ff41cc,
+        0 0 10px #00ff41bb;
+    }
 
-        .job-company {
-            color: #8b949e;
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
+    .job-details h3 {
+      color: #ff6b6b;
+      font-size: 17px;
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
 
-        .job-duration {
-            color: #6a737d;
-            font-size: 12px;
-        }
+    .job-company {
+      color: #8b949e;
+      font-size: 14px;
+      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+    }
 
-        .job-description {
-            color: #8b949e;
-            font-size: 13px;
-            margin: 15px 0;
-            line-height: 1.5;
-        }
+    .job-duration {
+      color: #6a737d;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+    }
 
-        .job-skills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 15px;
-        }
+    .job-description {
+      color: #8b949e;
+      font-size: 14px;
+      margin: 15px 0 0 0;
+      line-height: 1.5;
+    }
 
-        /* Status Bar */
-        .status-bar {
-            background: #21262d;
-            padding: 10px 20px;
-            border-top: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-        }
+    .job-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-        .status-left {
-            display: flex;
-            gap: 20px;
-        }
+    /* Status Bar */
+    .status-bar {
+      background: #0e161d;
+      padding: 12px 30px;
+      border-top: 1px solid #006621aa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      color: #00ff41;
+      user-select: none;
+      box-shadow: inset 0 0 15px #00ff41bb;
+      border-radius: 0 0 12px 12px;
+    }
 
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+    .status-left {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
 
-        .status-online {
-            width: 8px;
-            height: 8px;
-            background: #00ff41;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #00ff41;
+    }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
+    .status-item i {
+      font-size: 16px;
+      text-shadow: 0 0 6px #00ff41aa;
+    }
 
-        /* Contact Links */
-        .contact-matrix {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
+    .status-online {
+      width: 10px;
+      height: 10px;
+      background: #00ff41;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px #00ff41aa;
+    }
 
-        .contact-link {
-            background: #0d1117;
-            border: 1px solid #333;
-            padding: 10px 15px;
-            border-radius: 4px;
-            color: #00ff41;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
 
-        .contact-link:hover {
-            border-color: #00ff41;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-            color: #00ff41;
-        }
+    /* Contact Links */
+    .contact-matrix {
+      display: flex;
+      gap: 22px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .terminal-window {
-                margin: 10px;
-            }
-            
-            .terminal-content {
-                padding: 15px;
-            }
-            
-            .ascii-art {
-                font-size: 8px;
-            }
-            
-            .skills-matrix,
-            .project-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+    .contact-link {
+      background: #0d1117;
+      border: 1px solid #00ff41;
+      padding: 12px 20px;
+      border-radius: 6px;
+      color: #00ff41;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 600;
+      box-shadow: inset 0 0 10px #00ff41bb;
+      user-select: text;
+      font-size: 14px;
+    }
 
-        /* Boot sequence */
-        .boot-sequence {
-            margin: 20px 0;
-        }
+    .contact-link:hover {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 18px #ff6b6bcc, inset 0 0 15px #ff6b6bcc;
+      color: #ff6b6b;
+    }
 
-        .boot-line {
-            margin: 5px 0;
-            color: #6a737d;
-        }
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
 
-        .boot-line.success {
-            color: #00ff41;
-        }
+      .terminal-window {
+        height: auto;
+        max-height: none;
+      }
 
-        .boot-line.warning {
-            color: #ffa657;
-        }
+      .ascii-art {
+        font-size: 8px;
+      }
 
-        /* Glitch effect */
-        .glitch {
-            position: relative;
-            color: #00ff41;
-            animation: glitch 2s infinite;
-        }
+      .skills-matrix,
+      .project-grid {
+        grid-template-columns: 1fr !important;
+      }
 
-        @keyframes glitch {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-        }
-    </style>
+      .status-bar {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 12px;
+        padding: 10px 15px;
+      }
+
+      .status-left {
+        justify-content: center;
+      }
+    }
+
+    /* Boot sequence */
+    .boot-sequence {
+      margin: 20px 0 10px 0;
+      user-select: none;
+    }
+
+    .boot-line {
+      margin: 6px 0;
+      color: #6a737d;
+      opacity: 0;
+      transform: translateX(-15px);
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+
+    .boot-line.success {
+      color: #00ff41;
+    }
+
+    .boot-line.warning {
+      color: #ffa657;
+    }
+
+    /* Glitch effect */
+    .glitch {
+      position: relative;
+      color: #00ff41;
+      animation: glitch 2s infinite;
+      text-shadow:
+        2px 0 #ff00c8,
+        -2px 0 #00fff7;
+    }
+
+    @keyframes glitch {
+      0%,
+      100% {
+        transform: translate(0);
+      }
+      20% {
+        transform: translate(-2px, 2px);
+      }
+      40% {
+        transform: translate(-2px, -2px);
+      }
+      60% {
+        transform: translate(2px, 2px);
+      }
+      80% {
+        transform: translate(2px, -2px);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="matrix-bg">
-        <canvas id="matrix"></canvas>
-    </div>
+  <div class="matrix-bg">
+    <canvas id="matrix"></canvas>
+  </div>
 
+  <div class="container">
     <div class="terminal-window">
-        <div class="terminal-header">
-            <div class="terminal-buttons">
-                <div class="terminal-button close"></div>
-                <div class="terminal-button minimize"></div>
-                <div class="terminal-button maximize"></div>
-            </div>
-            <div class="terminal-title">dev-hack95@terminal: ~/portfolio</div>
+      <div class="terminal-header">
+        <div class="terminal-buttons">
+          <div class="terminal-button close"></div>
+          <div class="terminal-button minimize"></div>
+          <div class="terminal-button maximize"></div>
         </div>
-        
-        <div class="terminal-content">
-            <div class="boot-sequence">
-                <div class="boot-line">Loading developer profile...</div>
-                <div class="boot-line success">[OK] Neural networks initialized</div>
-                <div class="boot-line success">[OK] GPU cores loaded</div>
-                <div class="boot-line success">[OK] Low-latency optimizations enabled</div>
-                <div class="boot-line warning">[WARN] Coffee levels critically low</div>
-                <div class="boot-line success">[OK] System ready</div>
-            </div>
+        <div class="terminal-title">dev-hack95@terminal: ~/portfolio</div>
+      </div>
 
-            <div class="ascii-art">
+      <div class="terminal-content">
+        <div class="boot-sequence">
+          <div class="boot-line">Loading developer profile...</div>
+          <div class="boot-line success">[OK] Neural networks initialized</div>
+          <div class="boot-line success">[OK] GPU cores loaded</div>
+          <div class="boot-line success">[OK] Low-latency optimizations enabled</div>
+          <div class="boot-line warning">[WARN] Coffee levels critically low</div>
+          <div class="boot-line success">[OK] System ready</div>
+        </div>
+
+        <div class="ascii-art">
  ██████╗ ███████╗██╗   ██╗      ██╗  ██╗ █████╗  ██████╗██╗  ██╗ █████╗ ███████╗
  ██╔══██╗██╔════╝██║   ██║      ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔════╝
  ██║  ██║█████╗  ██║   ██║█████╗███████║███████║██║     █████╔╝ ╚██████║███████╗
  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══██║██╔══██║██║     ██╔═██╗  ╚═══██║╚════██║
  ██████╔╝███████╗ ╚████╔╝       ██║  ██║██║  ██║╚██████╗██║  ██╗ █████╔╝███████║
  ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚════╝ ╚══════╝
-            </div>
-
-            <div class="prompt typing-text">whoami</div>
-            
-            <div class="code-block">
-                <div class="code-line"><span class="keyword">class</span> <span class="function">Developer</span>:</div>
-                <div class="code-line">    <span class="keyword">def</span> <span class="function">__init__</span>(self):</div>
-                <div class="code-line">        self.name = <span class="string">"Saiprasad Toshatwad"</span></div>
-                <div class="code-line">        self.role = <span class="string">"Data Scientist | Backend Developer | ML Engineer"</span></div>
-                <div class="code-line">        self.current_position = <span class="string">"Software Development Engineer (SDE)"</span></div>
-                <div class="code-line">        self.company = <span class="string">"Cranberry Analytics"</span></div>
-                <div class="code-line">        self.location = <span class="string">"Pune, Maharashtra, India"</span></div>
-                <div class="code-line">        self.specialization = [</div>
-                <div class="code-line">            <span class="string">"Backend Infrastructure"</span>, <span class="string">"AI/ML Solutions"</span>,</div>
-                <div class="code-line">            <span class="string">"Data Science"</span><span class="string"></span></div>
-                <div class="code-line">        ]</div>
-                <div class="code-line">        self.interests = [</div>
-                <div class="code-line">            <span class="string">"GPU Specific Algorithmic Tuining"</span>, <span class="string">"Low-Latency Systems"</span>,</div>
-                <div class="code-line">            <span class="string">"FPGA Low-Latency Applications"</span>, <span class="string">"Coffee"</span>, <span class="string">"HomeLabs"</span></div>
-                <div class="code-line">        ]</div>
-            </div>
-
-            <div class="section">
-                <div class="section-header"><i class="fas fa-briefcase"></i> WORK_EXPERIENCE.log</div>
-                
-                <div class="experience-card">
-                    <div class="job-header">
-                        <div class="job-details">
-                            <h3>Software Development Engineer (SDE)</h3>
-                            <div class="job-company">Cranberry Analytics • Full-time</div>
-                            <div class="job-duration">Apr 2024 - Present • 1 yr 4 mos • Pune, Maharashtra, India • Hybrid</div>
-                        </div>
-                    </div>
-                    <div class="job-description">
-                        Spearheading the development and management of the company's backend infrastructure, ensuring seamless functionality and scalability. Focus on building AI solutions and optimizing system performance.
-                    </div>
-                    <div class="job-skills">
-                        <span class="tech-tag">Go</span>
-                        <span class="tech-tag">Python</span>
-                        <span class="tech-tag">Backend Development</span>
-                        <span class="tech-tag">Infrastructure</span>
-                        <span class="tech-tag">Scalability</span>
-                        <span class="tech-tag">AI/ML</span>
-                        <span class="tech-tag">Performance Optimization</span>
-                        <span class="tech-tag">Low-Power Computing</span>
-                        <span class="tech-tag">+10 skills</span>
-                    </div>
-                </div>
-
-                <div class="experience-card">
-                    <div class="job-header">
-                        <div class="job-details">
-                            <h3>Back End Developer</h3>
-                            <div class="job-company">AwesomeSuite • Internship</div>
-                            <div class="job-duration">May 2023 - Feb 2024 • 10 mos • India • Remote</div>
-                        </div>
-                    </div>
-                    <div class="job-description">
-                        Worked as a Golang developer, building scalable backend services and APIs. Gained experience in distributed systems and cloud technologies.
-                    </div>
-                    <div class="job-skills">
-                        <span class="tech-tag">Python</span>
-                        <span class="tech-tag">AWS Lambda</span>
-                        <span class="tech-tag">Golang</span>
-                        <span class="tech-tag">Backend Development</span>
-                        <span class="tech-tag">+1 skill</span>
-                    </div>
-                </div>
-
-                <div class="experience-card">
-                    <div class="job-header">
-                        <div class="job-details">
-                            <h3>Data Science Intern</h3>
-                            <div class="job-company">Eaton • Internship</div>
-                            <div class="job-duration">Aug 2023 - Nov 2023 • 4 mos • Pune, Maharashtra, India • On-site</div>
-                        </div>
-                    </div>
-                    <div class="job-description">
-                        Team member in generative design team for a research project. Implemented deep learning on dwg, dxf files to automate the circuit design process. Worked on AI-driven solutions for electrical circuit automation.
-                    </div>
-                    <div class="job-skills">
-                        <span class="tech-tag">Generative AI</span>
-                        <span class="tech-tag">Data Science</span>
-                        <span class="tech-tag">Deep Learning</span>
-                        <span class="tech-tag">Automation</span>
-                        <span class="tech-tag">+6 skills</span>
-                    </div>
-                </div>
-
-                <div class="experience-card">
-                    <div class="job-header">
-                        <div class="job-details">
-                            <h3>Data Science Intern</h3>
-                            <div class="job-company">Digilytics System LLP • Internship</div>
-                            <div class="job-duration">Jul 2022 - Dec 2022 • 6 mos • Pune, Maharashtra, India</div>
-                        </div>
-                    </div>
-                    <div class="job-description">
-                        Created AutoML pipeline for machine learning training and deployments. Developed automated solutions for ML model lifecycle management and streamlined the deployment process.
-                    </div>
-                    <div class="job-skills">
-                        <span class="tech-tag">Pandas</span>
-                        <span class="tech-tag">Python</span>
-                        <span class="tech-tag">AutoML</span>
-                        <span class="tech-tag">Machine Learning</span>
-                        <span class="tech-tag">MLOps</span>
-                        <span class="tech-tag">+5 skills</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-header"><i class="fas fa-microchip"></i> CORE_COMPETENCIES.exe</div>
-                <div class="skills-matrix">
-                    <div class="skill-block">
-                        <div class="skill-category">[LANGUAGES]</div>
-                        <div class="skill-list">
-                            Python • Go • C • Rust(Newbie) • Verilog(Newbie)<br>
-                            Assembly(Newbie) • HIP(AMD C++ Runtime API) • C++
-                        </div>
-                    </div>
-                    <div class="skill-block">
-                        <div class="skill-category">[AI/ML_STACK]</div>
-                        <div class="skill-list">
-                            TensorFlow • PyTorch • Scikit-Learn<br>
-                            XGBoost • NumPy • Pandas • OpenCV<br>
-                            AutoML • MLOps • Deep Learning
-                        </div>
-                    </div>
-                    <div class="skill-block">
-                        <div class="skill-category">[BACKEND_DEV]</div>
-                        <div class="skill-list">
-                            Golang • Gin/Gonic • Echo • Fiber<br>
-                            FastAPI • Flask • RESTful APIs<br>
-                            Microservices • Distributed Systems
-                        </div>
-                    </div>
-                    <div class="skill-block">
-                        <div class="skill-category">[CLOUD_&_DEVOPS]</div>
-                        <div class="skill-list">
-                            AWS • AWS Lambda • Docker • Kubernetes<br>
-                            Linux • GitHub Actions <br>
-                            Infrastructure as Code
-                        </div>
-                    </div>
-                    <div class="skill-block">
-                        <div class="skill-category">[DATABASES]</div>
-                        <div class="skill-list">
-                            PostgreSQL • Milvis  • Cassandra<br>
-                            Nebula(Knowledge Graph DB) • Redis • MQTT
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-header"><i class="fas fa-code-branch"></i> SPECIALIZATIONS.config</div>
-                <div class="project-grid">
-                    <div class="project-card">
-                        <div class="project-title">
-                            <i class="fas fa-server"></i>
-                            Backend Infrastructure
-                        </div>
-                        <div class="project-description">
-                            Developing and managing scalable backend infrastructure with focus on 
-                            performance, reliability, and seamless functionality across distributed systems.
-                        </div>
-                        <div class="project-tech">
-                            <span class="tech-tag">Golang</span>
-                            <span class="tech-tag">Python</span>
-                            <span class="tech-tag">Microservices</span>
-                            <span class="tech-tag">APIs</span>
-                        </div>
-                    </div>
-                    
-                    <div class="project-card">
-                        <div class="project-title">
-                            <i class="fas fa-brain"></i>
-                            AI/ML Solutions
-                        </div>
-                        <div class="project-description">
-                            Creating AI solutions for LocalAI applications, implementing deep learning 
-                            and Generative AI models to automate workflows
-                        </div>
-                        <div class="project-tech">
-                            <span class="tech-tag">TensorFlow</span>
-                            <span class="tech-tag">PyTorch</span>
-                            <span class="tech-tag">AutoML</span>
-                            <span class="tech-tag">MLOps</span>
-                        </div>
-                    </div>
-                    
-                    <!-- <div class="project-card">
-                        <div class="project-title">
-                            <i class="fas fa-bolt"></i>
-                            Performance Optimization
-                        </div>
-                        <div class="project-description">
-                            Optimizing system performance for low-latency applications and 
-                            resource-constrained environments with focus on efficiency.
-                        </div>
-                        <div class="project-tech">
-                            <span class="tech-tag">C</span>
-                            <span class="tech-tag">Performance Tuning</span>
-                            <span class="tech-tag">Low-Latency</span>
-                            <span class="tech-tag">FPGA</span>
-                        </div>
-                    </div> -->
-
-                    <div class="project-card">
-                        <div class="project-title">
-                            <i class="fas fa-cloud"></i>
-                            Cloud & DevOps
-                        </div>
-                        <div class="project-description">
-                            Building scalable cloud solutions using AWS services, implementing 
-                            serverless architectures with Lambda, and managing containerized applications.
-                        </div>
-                        <div class="project-tech">
-                            <span class="tech-tag">AWS</span>
-                            <span class="tech-tag">Lambda</span>
-                            <span class="tech-tag">Docker</span>
-                            <span class="tech-tag">DevOps</span>
-                        </div>
-                    </div>
-
-                    <div class="project-card">
-                        <div class="project-title">
-                            <i class="fas fa-chart-line"></i>
-                            Data Science & Analytics
-                        </div>
-                        <div class="project-description">
-                            End-to-end data science projects from data collection to deployment, 
-                            specializing in predictive modeling and statistical analysis.
-                        </div>
-                        <div class="project-tech">
-                            <span class="tech-tag">Python</span>
-                            <span class="tech-tag">Pandas</span>
-                            <span class="tech-tag">Statistics</span>
-                            <span class="tech-tag">Analytics</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-header"><i class="fas fa-terminal"></i> CONTACT_PROTOCOLS.init()</div>
-                <div class="contact-matrix">
-                    <a href="https://github.com/dev-hack95" class="contact-link">
-                        <i class="fab fa-github"></i>
-                        <span>github.com/dev-hack95</span>
-                    </a>
-                    <a href="https://www.linkedin.com/in/saiprasad-toshatwad-a75449206/" class="contact-link">
-                        <i class="fab fa-linkedin"></i>
-                        <span>LinkedIn Profile</span>
-                    </a>
-                    <a href="mailto:saiprasadtoshatwad@gmail.com" class="contact-link">
-                        <i class="fas fa-envelope"></i>
-                        <span>saiprasadtoshatwad@gmail.com</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="prompt">exit</div>
-            <div style="color: #6a737d; margin-top: 20px;">
-                Connection terminated. Remember: "The best code is the code that doesn't exist, 
-                but when it must exist, make it fast." - Anonymous Systems Programmer
-            </div>
         </div>
-        
-        <div class="status-bar">
-            <div class="status-left">
-                <div class="status-item">
-                    <div class="status-online"></div>
-                    <span>ONLINE</span>
-                </div>
-                <div class="status-item">
-                    <i class="fas fa-code"></i>
-                    <span>1.2M+ lines committed</span>
-                </div>
-                <div class="status-item">
-                    <i class="fas fa-coffee"></i>
-                    <span>Coffee: 47%</span>
-                </div>
-            </div>
-            <div class="status-right">
-                <span>Last compile: SUCCESS • Uptime: 99.97%</span>
-            </div>
+
+        <div class="prompt typing-text">whoami</div>
+
+        <div class="code-block">
+          <div class="code-line"><span class="keyword">class</span> <span class="function">Developer</span>:</div>
+          <div class="code-line">    <span class="keyword">def</span> <span class="function">__init__</span>(self):</div>
+          <div class="code-line">        self.name = <span class="string">"Saiprasad Toshatwad"</span></div>
+          <div class="code-line">        self.role = <span class="string">"Data Scientist | Backend Developer | ML Engineer"</span></div>
+          <div class="code-line">        self.current_position = <span class="string">"Software Development Engineer (SDE)"</span></div>
+          <div class="code-line">        self.company = <span class="string">"Cranberry Analytics"</span></div>
+          <div class="code-line">        self.location = <span class="string">"Pune, Maharashtra, India"</span></div>
+          <div class="code-line">        self.specialization = [</div>
+          <div class="code-line">            <span class="string">"Backend Infrastructure"</span>, <span class="string">"AI/ML Solutions"</span>,</div>
+          <div class="code-line">            <span class="string">"Data Science"</span></div>
+          <div class="code-line">        ]</div>
+          <div class="code-line">        self.interests = [</div>
+          <div class="code-line">            <span class="string">"GPU Specific Algorithmic Tuining"</span>, <span class="string">"Low-Latency Systems"</span>,</div>
+          <div class="code-line">            <span class="string">"FPGA Low-Latency Applications"</span>, <span class="string">"Coffee"</span>, <span class="string">"HomeLabs"</span></div>
+          <div class="code-line">        ]</div>
         </div>
+
+        <div class="section">
+          <div class="section-header"><i class="fas fa-briefcase"></i> WORK_EXPERIENCE.log</div>
+
+          <div class="experience-card">
+            <div class="job-header">
+              <div class="job-details">
+                <h3>Software Development Engineer (SDE)</h3>
+                <div class="job-company">Cranberry Analytics • Full-time</div>
+                <div class="job-duration">Apr 2024 - Present • 1 yr 4 mos • Pune, Maharashtra, India • Hybrid</div>
+              </div>
+            </div>
+            <div class="job-description">
+              Spearheading the development and management of the company's backend infrastructure, ensuring seamless functionality and scalability. Focus on building AI solutions and optimizing system performance.
+            </div>
+            <div class="job-skills">
+              <span class="tech-tag">Go</span>
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">Backend Development</span>
+              <span class="tech-tag">Infrastructure</span>
+              <span class="tech-tag">Scalability</span>
+              <span class="tech-tag">AI/ML</span>
+              <span class="tech-tag">Performance Optimization</span>
+              <span class="tech-tag">Low-Power Computing</span>
+              <span class="tech-tag">+10 skills</span>
+            </div>
+          </div>
+
+          <div class="experience-card">
+            <div class="job-header">
+              <div class="job-details">
+                <h3>Back End Developer</h3>
+                <div class="job-company">AwesomeSuite • Internship</div>
+                <div class="job-duration">May 2023 - Feb 2024 • 10 mos • India • Remote</div>
+              </div>
+            </div>
+            <div class="job-description">
+              Worked as a Golang developer, building scalable backend services and APIs. Gained experience in distributed systems and cloud technologies.
+            </div>
+            <div class="job-skills">
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">AWS Lambda</span>
+              <span class="tech-tag">Golang</span>
+              <span class="tech-tag">Backend Development</span>
+              <span class="tech-tag">+1 skill</span>
+            </div>
+          </div>
+
+          <div class="experience-card">
+            <div class="job-header">
+              <div class="job-details">
+                <h3>Data Science Intern</h3>
+                <div class="job-company">Eaton • Internship</div>
+                <div class="job-duration">Aug 2023 - Nov 2023 • 4 mos • Pune, Maharashtra, India • On-site</div>
+              </div>
+            </div>
+            <div class="job-description">
+              Team member in generative design team for a research project. Implemented deep learning on dwg, dxf files to automate the circuit design process. Worked on AI-driven solutions for electrical circuit automation.
+            </div>
+            <div class="job-skills">
+              <span class="tech-tag">Generative AI</span>
+              <span class="tech-tag">Data Science</span>
+              <span class="tech-tag">Deep Learning</span>
+              <span class="tech-tag">Automation</span>
+              <span class="tech-tag">+6 skills</span>
+            </div>
+          </div>
+
+          <div class="experience-card">
+            <div class="job-header">
+              <div class="job-details">
+                <h3>Data Science Intern</h3>
+                <div class="job-company">Digilytics System LLP • Internship</div>
+                <div class="job-duration">Jul 2022 - Dec 2022 • 6 mos • Pune, Maharashtra, India</div>
+              </div>
+            </div>
+            <div class="job-description">
+              Created AutoML pipeline for machine learning training and deployments. Developed automated solutions for ML model lifecycle management and streamlined the deployment process.
+            </div>
+            <div class="job-skills">
+              <span class="tech-tag">Pandas</span>
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">AutoML</span>
+              <span class="tech-tag">Machine Learning</span>
+              <span class="tech-tag">MLOps</span>
+              <span class="tech-tag">+5 skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><i class="fas fa-microchip"></i> CORE_COMPETENCIES.exe</div>
+          <div class="skills-matrix">
+            <div class="skill-block">
+              <div class="skill-category">[LANGUAGES]</div>
+              <div class="skill-list">
+                Python • Go • C • Rust(Newbie) • Verilog(Newbie)<br />
+                Assembly(Newbie) • HIP(AMD C++ Runtime API) • C++
+              </div>
+            </div>
+            <div class="skill-block">
+              <div class="skill-category">[AI/ML_STACK]</div>
+              <div class="skill-list">
+                TensorFlow • PyTorch • Scikit-Learn<br />
+                XGBoost • NumPy • Pandas • OpenCV<br />
+                AutoML • MLOps • Deep Learning
+              </div>
+            </div>
+            <div class="skill-block">
+              <div class="skill-category">[BACKEND_DEV]</div>
+              <div class="skill-list">
+                Golang • Gin/Gonic • Echo • Fiber<br />
+                FastAPI • Flask • RESTful APIs<br />
+                Microservices • Distributed Systems
+              </div>
+            </div>
+            <div class="skill-block">
+              <div class="skill-category">[CLOUD_&_DEVOPS]</div>
+              <div class="skill-list">
+                AWS • AWS Lambda • Docker • Kubernetes<br />
+                Linux • GitHub Actions <br />
+                Infrastructure as Code
+              </div>
+            </div>
+            <div class="skill-block">
+              <div class="skill-category">[DATABASES]</div>
+              <div class="skill-list">
+                PostgreSQL • Milvis  • Cassandra<br />
+                Nebula(Knowledge Graph DB) • Redis • MQTT
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><i class="fas fa-code-branch"></i> SPECIALIZATIONS.config</div>
+          <div class="project-grid">
+            <div class="project-card">
+              <div class="project-title">
+                <i class="fas fa-server"></i>
+                Backend Infrastructure
+              </div>
+              <div class="project-description">
+                Developing and managing scalable backend infrastructure with focus on
+                performance, reliability, and seamless functionality across distributed systems.
+              </div>
+              <div class="project-tech">
+                <span class="tech-tag">Golang</span>
+                <span class="tech-tag">Python</span>
+                <span class="tech-tag">Microservices</span>
+                <span class="tech-tag">APIs</span>
+              </div>
+            </div>
+
+            <div class="project-card">
+              <div class="project-title">
+                <i class="fas fa-brain"></i>
+                AI/ML Solutions
+              </div>
+              <div class="project-description">
+                Creating AI solutions for LocalAI applications, implementing deep learning
+                and Generative AI models to automate workflows
+              </div>
+              <div class="project-tech">
+                <span class="tech-tag">TensorFlow</span>
+                <span class="tech-tag">PyTorch</span>
+                <span class="tech-tag">AutoML</span>
+                <span class="tech-tag">MLOps</span>
+              </div>
+            </div>
+
+            <div class="project-card">
+              <div class="project-title">
+                <i class="fas fa-cloud"></i>
+                Cloud & DevOps
+              </div>
+              <div class="project-description">
+                Building scalable cloud solutions using AWS services, implementing
+                serverless architectures with Lambda, and managing containerized applications.
+              </div>
+              <div class="project-tech">
+                <span class="tech-tag">AWS</span>
+                <span class="tech-tag">Lambda</span>
+                <span class="tech-tag">Docker</span>
+                <span class="tech-tag">DevOps</span>
+              </div>
+            </div>
+
+            <div class="project-card">
+              <div class="project-title">
+                <i class="fas fa-chart-line"></i>
+                Data Science & Analytics
+              </div>
+              <div class="project-description">
+                End-to-end data science projects from data collection to deployment,
+                specializing in predictive modeling and statistical analysis.
+              </div>
+              <div class="project-tech">
+                <span class="tech-tag">Python</span>
+                <span class="tech-tag">Pandas</span>
+                <span class="tech-tag">Statistics</span>
+                <span class="tech-tag">Analytics</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header"><i class="fas fa-terminal"></i> CONTACT_PROTOCOLS.init()</div>
+          <div class="contact-matrix">
+            <a href="https://github.com/dev-hack95" class="contact-link" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-github"></i>
+              <span>github.com/dev-hack95</span>
+            </a>
+            <a href="https://www.linkedin.com/in/saiprasad-toshatwad-a75449206/" class="contact-link" target="_blank" rel="noopener noreferrer">
+              <i class="fab fa-linkedin"></i>
+              <span>LinkedIn Profile</span>
+            </a>
+            <a href="mailto:saiprasadtoshatwad@gmail.com" class="contact-link">
+              <i class="fas fa-envelope"></i>
+              <span>saiprasadtoshatwad@gmail.com</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="prompt">exit</div>
+        <div
+          style="
+            color: #6a737d;
+            margin-top: 20px;
+            font-size: 13px;
+            user-select: none;
+          "
+        >
+          Connection terminated. Remember: "The best code is the code that doesn't exist,
+          but when it must exist, make it fast." - Anonymous Systems Programmer
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-item">
+            <div class="status-online"></div>
+            <span>ONLINE</span>
+          </div>
+          <div class="status-item">
+            <i class="fas fa-code"></i>
+            <span>1.2M+ lines committed</span>
+          </div>
+          <div class="status-item">
+            <i class="fas fa-coffee"></i>
+            <span>Coffee: 47%</span>
+          </div>
+        </div>
+        <div class="status-right">
+          <span>Last compile: SUCCESS • Uptime: 99.97%</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
+  <script>
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
 
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    const letters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?";
+    const fontSize = 14;
+    let columns = Math.floor(canvas.width / fontSize);
+    const drops = [];
 
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?';
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = [];
+    for (let i = 0; i < columns; i++) {
+      drops[i] = 1;
+    }
 
-        for (let i = 0; i < columns; i++) {
-            drops[i] = 1;
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(10, 10, 10, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#00ff41";
+      ctx.font = fontSize + "px JetBrains Mono";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
         }
+        drops[i]++;
+      }
+    }
 
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setInterval(drawMatrix, 50);
 
-            ctx.fillStyle = '#00ff41';
-            ctx.font = fontSize + 'px JetBrains Mono';
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      columns = Math.floor(canvas.width / fontSize);
+      drops.length = columns;
+      for (let i = 0; i < columns; i++) {
+        if (!drops[i]) drops[i] = 1;
+      }
+    });
 
-            for (let i = 0; i < drops.length; i++) {
-                const text = letters[Math.floor(Math.random() * letters.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    const bootLines = document.querySelectorAll(".boot-line");
+    bootLines.forEach((line, index) => {
+      setTimeout(() => {
+        line.style.opacity = "1";
+        line.style.transform = "translateX(0)";
+      }, index * 300);
+    });
 
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
+    bootLines.forEach((line) => {
+      line.style.opacity = "0";
+      line.style.transform = "translateX(-20px)";
+      line.style.transition = "all 0.3s ease";
+    });
 
-        setInterval(drawMatrix, 50);
+    const asciiArt = document.querySelector(".ascii-art");
+    asciiArt.addEventListener("mouseenter", () => {
+      asciiArt.classList.add("glitch");
+    });
+    asciiArt.addEventListener("mouseleave", () => {
+      asciiArt.classList.remove("glitch");
+    });
 
+    const statusMessages = [
+      "Optimizing neural pathways...",
+      "Compiling quantum algorithms...",
+      "Debugging the universe...",
+      "Refactoring reality.exe...",
+      "Training AI overlords...",
+      "Hacking the Gibson...",
+    ];
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+    setInterval(() => {
+      const randomMsg =
+        statusMessages[Math.floor(Math.random() * statusMessages.length)];
+      console.log(
+        `%c${randomMsg}`,
+        "color: #00ff41; font-family: monospace; font-weight: 600;"
+      );
+    }, 10000);
 
-    
-        let terminalText = '';
-        const terminalElement = document.querySelector('.typing-text');
-        
-        function typeText(text, element, delay = 100) {
-            let i = 0;
-            const timer = setInterval(() => {
-                if (i < text.length) {
-                    element.textContent = text.substring(0, i + 1);
-                    i++;
-                } else {
-                    clearInterval(timer);
-                }
-            }, delay);
-        }
+    let konamiCode = [];
+    const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 
+    document.addEventListener("keydown", (e) => {
+      konamiCode.push(e.keyCode);
+      if (konamiCode.length > konamiSequence.length) {
+        konamiCode.shift();
+      }
 
-        const bootLines = document.querySelectorAll('.boot-line');
-        bootLines.forEach((line, index) => {
-            setTimeout(() => {
-                line.style.opacity = '1';
-                line.style.transform = 'translateX(0)';
-            }, index * 300);
-        });
-
-
-        bootLines.forEach(line => {
-            line.style.opacity = '0';
-            line.style.transform = 'translateX(-20px)';
-            line.style.transition = 'all 0.3s ease';
-        });
-
-        const asciiArt = document.querySelector('.ascii-art');
-        asciiArt.addEventListener('mouseenter', () => {
-            asciiArt.classList.add('glitch');
-        });
-        asciiArt.addEventListener('mouseleave', () => {
-            asciiArt.classList.remove('glitch');
-        });
-
-        const statusMessages = [
-            'Optimizing neural pathways...',
-            'Compiling quantum algorithms...',
-            'Debugging the universe...',
-            'Refactoring reality.exe...',
-            'Training AI overlords...',
-            'Hacking the Gibson...'
-        ];
-
-        setInterval(() => {
-            const randomMsg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
-            console.log(`%c${randomMsg}`, 'color: #00ff41; font-family: monospace;');
-        }, 10000);
-
-        let konamiCode = [];
-        const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
-        
-        document.addEventListener('keydown', (e) => {
-            konamiCode.push(e.keyCode);
-            if (konamiCode.length > konamiSequence.length) {
-                konamiCode.shift();
-            }
-            
-            if (JSON.stringify(konamiCode) === JSON.stringify(konamiSequence)) {
-                document.body.style.filter = 'hue-rotate(180deg)';
-                setTimeout(() => {
-                    document.body.style.filter = 'none';
-                }, 3000);
-                console.log('%cEaster egg activated! Welcome to the dark side of the code.', 'color: #ff6b6b; font-size: 16px; font-family: monospace;');
-            }
-        });
-    </script>
+      if (JSON.stringify(konamiCode) === JSON.stringify(konamiSequence)) {
+        document.body.style.filter = "hue-rotate(180deg)";
+        setTimeout(() => {
+          document.body.style.filter = "none";
+        }, 3000);
+        console.log(
+          "%cEaster egg activated! Welcome to the dark side of the code.",
+          "color: #ff6b6b; font-size: 16px; font-family: monospace;"
+        );
+      }
+    });
+  </script>
 </body>
 </html>
-
