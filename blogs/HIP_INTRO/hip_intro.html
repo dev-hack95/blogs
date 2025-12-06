@@ -99,7 +99,7 @@
 
         <P>
             For Navie kernel, we’ll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
-            and column of B, and write the result to C. Due to each location of C being written to by only one thread, we have to do no synchronization
+            and column of B, and write the result to C. Due to each location of C being written to by only one thread, we  don't have to do any synchronization
         </P>
 
         <pre class="line-numbers">
