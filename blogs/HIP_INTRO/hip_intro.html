@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction to HIP programming (AMD)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src='https://unpkg.com/mermaid@8.1.0/dist/mermaid.min.js'></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="../../style.css">
+</head>
+<body>
+    <header>
+        <h1>Introduction to HIP programming (AMD)</h1>
+        <span class="date">Dec 6, 2025</span>
+        <br><br>
+        <a href="../../index.html" class="about-me-link">Home</a>
+        &nbsp; &nbsp;
+    </header>
+    <main>
+        <p>
+            Before discussing the topic, let's talk about the hardware that runs these operations. GPUs (Graphics Processing Units) are specialized hardware designed to run multiple operations simultaneously for rendering games, 
+            running simulations, and more. There are two major players in this race: AMD(Team Red) and NVIDIA(Team Green). Both compete neck-to-neck  when it comes to gaming, but the story is different in machine learning and compute. 
+            NVIDIA has been dominating the AI market, until AMD introduced the <a href="https://www.youtube.com/watch?v=lVzVOs-5Qb0">RDNA4</a> and <a href="https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/white-papers/amd-cdna-4-architecture-whitepaper.pdf">CDNA4</a> architectures. 
+            This architecture brings significant improvements in compute performance and AI workloads, featuring FP8 and INT4 with structured sparsity,  improved power efficiency, and better support for drivers on linux by offering competitive performance at potentially better price points, giving developers and 
+            researchers more options when building AI systems and there is one more reason (personal choice) to choose AMD which is opensource ecosystsem unlike NVIDIA vendor locking of CUDA and its license constraints.
+        </p>
+        <br>
+        <p>
+            HIP (Heterogeneous-Compute Interface for Portability) is a C++ runtime API and kernel language that uses LLVM to provide an interface for AMD GPUs—similar to CUDA but less mature. HIP enables programming thousands 
+            of GPU cores to execute parallel operations simultaneously. 
+        </p>
+        <p>
+            Gpu's leverages the SIMD (Single Instruction, Multiple Data) programming model excels in <a href="https://en.algorithmica.org/hpc/pipelining/branchless/">branchless</a> programming techniques, where conditional 
+            logic is minimized allowing the same operation to be performed across multiple data points simultaneously, maximizing GPU throughput.
+        </p>
+        <br>
+        <p>
+            Before the code and implementation lets understand some terminologies of HIP programming.
+        </p>
+        <br>
+        <p>
+            <img src="media/hip_intro_img_1.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+        <br>
+        <p>
+            The HIP computation is orderd in three hierarchy level. Each initialization of hip code create a grid first then creates blocks and then threads. Threads which are in same block access the same memory region.
+        </p>
+
+        <p>
+            <div>
+                The GPU-accelerated computation follows a well-defined five-stage pipeline, illustrated below. Each stage plays a critical role in the overall execution efficiency.
+            </div>
+            <div style="font-family: monospace; white-space: pre; text-align: center;">
+                [Host Memory] → [PCIe Transfer] → [Device Memory] → [Compute Kernels] <br>
+                                                                            ↓<br>
+                [Display Results] ← [Host Memory] ← [PCIe Transfer] ← [Device Memory]
+            </div>
+
+        </p>
+
+        <h2>Problem Formulation</h2>
+        <p>
+            Given two matrices \( A \in \mathbb{R}^{m \times k} \) and \( B \in \mathbb{R}^{k \times n} \), we seek to compute their product \( C = A \times B \) where \( C \in \mathbb{R}^{m \times n} \), such that:
+        </p>
+        <p>
+            \[
+                C_{ij} = \sum_{p=1}^{k} A_{ip} \cdot B_{pj}
+            \]
+        </p>
+        <p>
+            for all \(i \in [1, m]\) and \(j \in [1, n]\).
+        </p>
+        <br>
+
+        <h2>Navie Implementation</h2>
+
+        
+
+        <p>
+            Naive implementation in matrix multiplication is the baasic algorithm that computes each element of the result matrix as the sum of pairwise products from the input matrices' corresponding row and column
+        </p>
+
+        <h3>How It Works</h3>
+
+        <p>
+            <img src="media/hip_intro_img_2.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+        <p>
+            For matrices A (m × n) and B (n × p), the result C (m × p) has each entry C[i][j] calculated via a triple nested loop: for each i and j, sum A[i][k] * B[k][j] over k from 0 to n-1
+        </p>
+
+
+        <P>
+            For Navie kernel, we’ll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
+            and column of B, and write the result to C. Due to each location of C being written to by only one thread, we have to do no synchronization
+        </P>
+
+        <pre class="line-numbers">
+            <code class="language-cpp">
+                /*
+                * @info - The function multiply two matrix of size A[MxK] and B[KxN] which will return a matrix C[MxN]
+                * @param - A and B are constant matrix and C will be the output matrix
+                * @param - M, N and K are the size of matrix rows and cols w.r.t matrix   
+                */
+                __global__ void matrixMultiplication(const float* A, const float* B, float* C, int M, int N, int K) {
+                  int row = threadIdx.y + blockIdx.y * blockDim.y;
+                  int col = threadIdx.x + blockIdx.x * blockDim.x;
+                  
+                  if (row < M && col < N) {
+                    float sum = 0.0f;
+                    for(int i = 0; i < K; ++i) {
+                      sum += A[row * K + i] * B[i * N + col];
+                    }
+                    C[row * N + col] = sum;
+                  }
+                }
+
+            </code>
+        </pre>
+
+        <p>
+            The Code mention below the compute function for each thread in the computation
+            <img src="media/threads2.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+        <p>
+            While the naive implementation demonstrates the fundamental concepts of HIP programming and parallel matrix multiplication, it's important to recognize that this is merely the starting point. The naive kernel, though functionally correct, suffers from significant performance bottlenecks that prevent it from achieving optimal GPU utilization.
+        </p>
+        
+        <p>
+            The primary limitation lies in memory access patterns. Each thread repeatedly accesses global memory for elements of matrices A and B, resulting in poor memory bandwidth utilization and high latency. Modern GPUs have complex memory hierarchies including shared memory, L1 and L2 caches, and registers, which the naive implementation fails to exploit effectively. Additionally, there's no memory coalescing optimization, meaning adjacent threads may access non-contiguous memory locations, further degrading performance.
+        </p>
+        
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+</body>
