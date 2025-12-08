@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Introduction to HIP programming (AMD)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    <script src='https://unpkg.com/mermaid@8.1.0/dist/mermaid.min.js'></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
@@ -137,6 +136,118 @@
         <p>
             The primary limitation lies in memory access patterns. Each thread repeatedly accesses global memory for elements of matrices A and B, resulting in poor memory bandwidth utilization and high latency. Modern GPUs have complex memory hierarchies including shared memory, L1 and L2 caches, and registers, which the naive implementation fails to exploit effectively. Additionally, there's no memory coalescing optimization, meaning adjacent threads may access non-contiguous memory locations, further degrading performance.
         </p>
+
+        <h4>Whole Code</h4>
+
+        <pre class="line-numbers">
+            <code class="language-cpp">
+                #include <cstdlib>
+                #include <hip/hip_runtime.h>
+                #include <iostream>
+                #include <vector>
+                
+                #define HIP_CHECK(exp) do {                                                                                        \
+                  const hipError_t err = exp;                                                                                      \
+                  if (err != hipSuccess) {                                                                                         \
+                    std::cerr << "Hip error: " << hipGetErrorString(err) << " at " << __FILE__ << " : " << __LINE__ << std::endl;  \
+                    std::exit(EXIT_FAILURE);                                                                                       \
+                  }                                                                                                                \
+                } while(0)
+                
+                /*
+                * @info - The function multiply two matrix of size A[MxK] and B[KxN] which will return a matrix C[MxN]
+                * @param - A and B are constant matrix and C will be the output matrix
+                * @param - M, N and K are the size of matrix rows and cols w.r.t matrix   
+                */
+                __global__ void matrixMultiplication(const float* A, const float* B, float* C, int M, int N, int K) {
+                  int row = threadIdx.y + blockIdx.y * blockDim.y;
+                  int col = threadIdx.x + blockIdx.x * blockDim.x;
+                  
+                  if (row < M && col < N) {
+                    float sum = 0.0f;
+                    for(int i = 0; i < K; ++i) {
+                      sum += A[row * K + i] * B[i * N + col];
+                    }
+                    C[row * N + col] = sum;
+                  }
+                }
+                
+                /*
+                * Function - initMatrix
+                * @info - The function create a matrix at host(cpu)
+                */
+                void initMatrix(std::vector<float> &vec, int rows, int cols) {
+                  for (int i = 0; i < rows * cols; ++i) {
+                    vec[i] = static_cast<float>(i + 1);
+                  }
+                }
+                
+                void run_kernel() {
+                  int M = 64;  // Reduced size for easier debugging
+                  int N = 64;
+                  int K = 64;
+                  
+                  // Allocate cpu memory
+                  std::vector<float> h_A(M * K);
+                  std::vector<float> h_B(K * N);
+                  std::vector<float> h_C(M * N);
+                  
+                  
+                  initMatrix(h_A, M, K);
+                  initMatrix(h_B, K, N); 
+                
+                  
+                  // Allocate gpu memory
+                  float *d_A, *d_B, *d_C;
+                  HIP_CHECK(hipMalloc(&d_A, M * K * sizeof(float)));
+                  HIP_CHECK(hipMalloc(&d_B, K * N * sizeof(float)));
+                  HIP_CHECK(hipMalloc(&d_C, M * N * sizeof(float)));
+                  
+                  // copy data from host(cpu) to gpu
+                  HIP_CHECK(hipMemcpy(d_A, h_A.data(), M * K * sizeof(float), hipMemcpyHostToDevice));
+                  HIP_CHECK(hipMemcpy(d_B, h_B.data(), K * N * sizeof(float), hipMemcpyHostToDevice));
+                  
+                  // Launch kernel
+                  dim3 blockSize(16, 16);
+                  dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (M + blockSize.y - 1) / blockSize.y);
+                
+                  // Hip style code 
+                  void *kernelArgs[] = { &d_A, &d_B, &d_C, &M, &N, &K }; 
+                  HIP_CHECK(hipLaunchKernel((const void*)matrixMultiplication, gridSize, blockSize, (void**)kernelArgs, 0, 0));
+                  
+                  // Cuda style code
+                  //matrixMultiplication<<<gridSize, blockSize>>>(d_A, d_B, d_C, M, N, K);
+                
+                  // Check for error while launching kernel
+                  HIP_CHECK(hipGetLastError());
+                  
+                  HIP_CHECK(hipDeviceSynchronize());  
+                  
+                  // Copy result back from GPU to CPU
+                  HIP_CHECK(hipMemcpy(h_C.data(), d_C, M * N * sizeof(float), hipMemcpyDeviceToHost));
+                  
+                  std::cout << "\nResult Matrix C (" << M << "x" << N << "):" << std::endl;
+                  for(int i = 0; i < M; ++i) {
+                    for(int j = 0; j < N; ++j) {
+                      std::cout << h_C[i * N + j] << " ";
+                    }
+                    std::cout << std::endl;
+                  }
+                  
+                  // Clean up
+                  HIP_CHECK(hipFree(d_A));
+                  HIP_CHECK(hipFree(d_B));
+                  HIP_CHECK(hipFree(d_C));  
+                }
+                
+                int main() {
+                  run_kernel();
+                  return 0;
+                }
+
+
+            </code>
+        </pre>
         
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
