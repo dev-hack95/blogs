@@ -141,10 +141,10 @@
 
         <pre class="line-numbers">
             <code class="language-cpp">
-                #include <cstdlib>
-                #include <hip/hip_runtime.h>
-                #include <iostream>
-                #include <vector>
+                #include "cstdlib"
+                #include "hip/hip_runtime.h"
+                #include "iostream"
+                #include "vector"
                 
                 #define HIP_CHECK(exp) do {                                                                                        \
                   const hipError_t err = exp;                                                                                      \
@@ -244,8 +244,6 @@
                   run_kernel();
                   return 0;
                 }
-
-
             </code>
         </pre>
         
