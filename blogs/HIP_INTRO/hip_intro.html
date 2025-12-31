@@ -48,7 +48,7 @@
         </p>
         <br>
         <p>
-            The HIP computation is orderd in three hierarchy level. Each initialization of hip code create a grid first then creates blocks and then threads. Threads which are in same block access the same memory region.
+            The HIP computation is ordered in three hierarchy level. Each initialization of hip code create a grid first then creates blocks and then threads. Threads which are in same block access the same memory region.
         </p>
 
         <p>
@@ -77,12 +77,12 @@
         </p>
         <br>
 
-        <h2>Navie Implementation</h2>
+        <h2>Naive Implementation</h2>
 
         
 
         <p>
-            Naive implementation in matrix multiplication is the baasic algorithm that computes each element of the result matrix as the sum of pairwise products from the input matrices' corresponding row and column
+            Naive implementation in matrix multiplication is the basic algorithm that computes each element of the result matrix as the sum of pairwise products from the input matrices' corresponding row and column
         </p>
 
         <h3>How It Works</h3>
@@ -97,7 +97,7 @@
 
 
         <P>
-            For Navie kernel, we’ll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
+            For Naive kernel, we’ll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
             and column of B, and write the result to C. Due to each location of C being written to by only one thread, we  don't have to do any synchronization
         </P>
 
@@ -298,13 +298,13 @@
         </p>
 
         <p>
-            * L2 Cache :- This is type of memory which is shared by all compute uints on the die which in my case is 8MB on die L2 Cache
+            * L2 Cache :- This is type of memory which is shared by all compute units on the die which in my case is 8MB on die L2 Cache
         </p>
 
         <p>
             * L3 Cache(Infinity Cache in RDNA4) :- The cache sits b/w L2 cache and Global Memory(GDDR6 DRAM) acting as buffer that reduce
             the need to access slower, power hungry off chip memory. This new set of memory architecture really level up the game of AMD.
-            With this kind of memory architecture you can use streams effectively for to-and-fro of data effectively
+            With this kind of memory architecture you can use streams effectively for to-and-fro of data.
         </p>
 
 
@@ -364,7 +364,7 @@
 
     <p>
         After comparing the performance of second kernel over first we got about 5x in performance increase in kernel execution.
-        The Navie Kernel took about 377ms to execute 4096 x 4096 matrix multiplication and for same size of matrix Shared memory
+        The Naive Kernel took about 377ms to execute 4096 x 4096 matrix multiplication and for same size of matrix Shared memory
         version of kernel tool 81ms which is huge jump in performance
     </p>
 
