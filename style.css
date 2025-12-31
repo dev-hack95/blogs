@@ -201,7 +201,16 @@ code:not([class*="language-"]) {
         max-width: 300px;
         margin-top: 10px;
     }
-    
+
+    .post-gif {
+        width: 100% !important; 
+        height: auto !important;
+        max-width: 300px;
+        margin-top: 10px;
+        display: block;
+        object-fit: contain;
+    }
+        
     .profile-image {
         max-width: 100%;
         height: auto;
