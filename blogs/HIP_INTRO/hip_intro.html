@@ -250,6 +250,139 @@
                 }
             </code>
         </pre>
+
+
+        <br>
+        <br>
+
+        <h2> Shared Memory Cache </h2>
+
+        <p>
+            Before understanding shared memory lets understand the concept of wavefront(Rocm) / warp(CUDA) these are fundamental hardware units which are used to schedule
+            the threads in the batch of 32, the wavefront follows SIMT(Same Instruction Multiple Threads) format this means all the threads in same wavefront executes the
+            same instructions.
+        </p>
+
+        <h4> How Scheduling and Execution Works</h4>
+
+        <p>
+            When we launch any gpu kernel with threads organized into blocks the gpu automatically divides those threads into wavefront of size 32
+        </p>
+
+        <p>
+            <img src="media/wavefrontscheduling.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+        <p>
+            The wavefront scheduler picks wavefront that are ready to execute the issued instruction sets to them
+            , all the 32 threads in wavefront executes the same instruction set
+        </p>
+
+
+        <p>
+            <img src="media/wavefrontinfo.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+        <p>
+            Lets move on to the main topic which is shared memory, The GPU i posses have four types of memory: a) L1 Cache/Shared memory
+            b) L2 Cache , c) L3 Cache and d) Global Memory (DRAM)
+        </p>
+
+        <p>
+            <img src="media/gpu_cache_info.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+        <p>
+            * L1 Cache / Shared Memory :- This is type of memory which is shared by same compute uint in my case its 32 kB which gives
+            pretty fast access of data which is 5ns
+        </p>
+
+        <p>
+            * L2 Cache :- This is type of memory which is shared by all compute uints on the die which in my case is 8MB on die L2 Cache
+        </p>
+
+        <p>
+            * L3 Cache(Infinity Cache in RDNA4) :- The cache sits b/w L2 cache and Global Memory(GDDR6 DRAM) acting as buffer that reduce
+            the need to access slower, power hungry off chip memory. This new set of memory architecture really level up the game of AMD.
+            With this kind of memory architecture you can use streams effectively for to-and-fro of data effectively
+        </p>
+
+
+        <p>
+            For this kernel we will load the chunks of A and chunks of B from global memory to the shared
+            memory. Then we perform all the operations using shared memory, we will move chunks along with
+            A and B doing partial sums
+        </p>
+
+        <h3> How it works </h3>
+
+        <p>
+            <img src="media/shared_mem_implemntation.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+        </p>
+
+
+        <pre class="line-numbers">
+            <code class="language-cpp">
+                template "<"const uint BLOCKSIZE = 32, typename T">"
+                __global__ void matmulKernel3(T const* A, T const* B, T* C, uint M, uint N, uint K) {
+                    const uint cRow = blockIdx.x;
+                    const uint cCol = blockIdx.y;
+                
+                    __shared__ float As[BLOCKSIZE * BLOCKSIZE];
+                    __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
+                
+                    int threadCol = threadIdx.x % BLOCKSIZE;
+                    int threadRow = threadIdx.x / BLOCKSIZE;
+                
+                    A += cRow * BLOCKSIZE * K;
+                    B += cCol * BLOCKSIZE;                        
+                    C += cRow * BLOCKSIZE * N + cCol * BLOCKSIZE; 
+                
+                    float sum = 0.0;
+                
+                    for (int bkIdx = 0; bkIdx < K; bkIdx += BLOCKSIZE) {
+                        As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * K + threadCol];
+                        Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * N + threadCol];
+                
+                        __syncthreads();
+                
+                        A += BLOCKSIZE;
+                        B += BLOCKSIZE * N;
+                
+                        for (int dotIdx = 0; dotIdx < BLOCKSIZE; ++dotIdx) {
+                            sum += As[threadRow * BLOCKSIZE + dotIdx] * Bs[dotIdx  * BLOCKSIZE + threadCol];
+                        }
+                
+                        __syncthreads();
+                    }
+                
+                    C[threadRow * N + threadCol] = sum;
+                
+                }
+            </code>
+        </pre>
+
+    <p>
+        After comparing the performance of second kernel over first we got about 5x in performance increase in kernel execution.
+        The Navie Kernel took about 377ms to execute 4096 x 4096 matrix multiplication and for same size of matrix Shared memory
+        version of kernel tool 81ms which is huge jump in performance
+    </p>
+
+
+    <h4> Naive Kernel Trace </h4>
+    
+    <p>
+        <img src="media/trace_navie_kernel.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+    </p>
+
+    <h4>Shared Memory Kernel</h4>
+
+    <p>
+        <img src="media/trace_shared_mem.png" style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;">
+    </p>
+
+
+    <h3>Next Kernels Coming Soon...</h3>
         
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
