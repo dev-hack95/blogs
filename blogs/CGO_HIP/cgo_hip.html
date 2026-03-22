@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGO + HIP: Accelarted Linear Algebra in Go</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="../../style.css">
+</head>
+<body>
+    <header>
+        <h1>CGO + HIP: Accelarted Linear Algebra in Go</h1>
+        <span class="date">Jan 12, 2026</span>
+        <br><br>
+        <a href="../../index.html" class="about-me-link">Home</a>
+        &nbsp; &nbsp;
+    </header>
+    <main>
+        <p>
+            Go is the only programming language that nails it all—blazing-fast compile times, rapid code shipping, and effortless debugging. What some see as a hassle—errors returned as values—feels like a superpower to me.
+            It forces robust error handling upfront, saving headaches later. When shipping the most complex projects, Go let me optimize with confidence, turning potential chaos into seamless execution and does all this with a garbage
+            collector but go community lacks in one field and that is AI and Machine Learning i.e Accelerated Linear Algebra, Libraries for GPU-accelerated matrix operations exist in the Go ecosystem, but they're held back by sparse
+            documentation and rigid APIs. You can perform the standard matrix multiplications on CUDA hardware, but you're locked into predefined operations. The moment you need something more specialized—calculating Manhattan distance,
+            computing cosine similarity, implementing streaming hash functions for file integrity checks, or performing real-time hashing—you hit a wall.
+        </p>
+
+        <p>
+            These operations share a common thread: they're computationally expensive on CPUs. Each one involves processing massive amounts of data, and traditionally, this workload crushes server performance. But here's the opportunity:
+            all of these operations can be offloaded to GPUs, transforming your service from handling hundreds of requests per second to millions. But writing any web services c/c++ is pain and unreliable and memory prone insted of writing
+            whole web services in c/c++ we can offload only that specific computation on needed explict hardware i.e GPU, FPGA's ... etc  that where CGO comes in it provides a interface
+            for calling c code using golang which can be bridge b/w such SIMD operations, which will drastically reduce the compute time to process any request
+        </p>
+ 
+        <p>
+            In this blog our targeted hardware is AMD (Team Red) hardware, there are go libraries that support CUDA hardware but there are not many api implmentation for the support of AMD hadware, AMD have a CUDA translation api but to get
+            work around with amd you have to compile/regenerate all cgo files via its translation api still the bottleneck remains the same that explict usecases
+        </p>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+</body>

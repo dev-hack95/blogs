@@ -11,6 +11,233 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="../../style.css">
+
+    <style>
+        /* ── Simulation container shared styles ── */
+        .sim-wrapper {
+            margin: 2rem 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .sim-header {
+            padding: 14px 20px 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .sim-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .sim-badge.naive  { background: #dbeafe; color: #1e40af; }
+        .sim-badge.shared { background: #fce7f3; color: #9d174d; }
+        .sim-header h3 {
+            margin: 0 0 2px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        .sim-header p {
+            margin: 0;
+            font-size: 12px;
+            color: #718096;
+        }
+        .sim-body {
+            padding: 16px 20px;
+        }
+
+        /* ── Matrix grid ── */
+        .matrix-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .matrix-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .matrix-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .matrix-grid {
+            display: grid;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .cell {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #718096;
+            border: 0.5px solid #e2e8f0;
+            transition: background 0.12s, color 0.12s;
+        }
+        .cell.row-active  { background: rgba(59,130,246,0.18); color: #1e40af; }
+        .cell.col-active  { background: rgba(245,158,11,0.18); color: #92400e; }
+        .cell.computing   { background: rgba(16,185,129,0.25); color: #065f46; font-weight: 600; }
+        .cell.done        { background: rgba(59,130,246,0.07); }
+        .cell.current     {
+            background: rgba(16,185,129,0.45);
+            color: #065f46;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1.5px #059669;
+        }
+        .op-symbol {
+            font-size: 22px;
+            color: #a0aec0;
+            align-self: center;
+            margin-top: 18px;
+        }
+
+        /* ── Shared mem tiles ── */
+        .shmem-panel {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 8px 0 10px;
+            flex-wrap: wrap;
+        }
+        .shmem-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .shmem-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9d174d;
+        }
+        .shmem-grid {
+            display: grid;
+            border: 1.5px solid rgba(219,39,119,0.45);
+            border-radius: 5px;
+            overflow: hidden;
+            background: rgba(252,231,243,0.2);
+        }
+        .scell {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            border: 0.5px solid rgba(219,39,119,0.12);
+            color: #6b7280;
+            transition: background 0.12s, color 0.12s;
+        }
+        .scell.loaded { background: rgba(219,39,119,0.25); color: #831843; font-weight: 600; }
+        .scell.active { background: rgba(219,39,119,0.5);  color: #831843; font-weight: 700; }
+        .scell.empty  { background: transparent; }
+        .cell.tile-a  { background: rgba(59,130,246,0.2);  color: #1e40af; }
+        .cell.tile-b  { background: rgba(245,158,11,0.2);  color: #92400e; }
+        .cell.cur     {
+            background: rgba(16,185,129,0.45);
+            color: #065f46;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1.5px #059669;
+        }
+
+        /* ── Info bar ── */
+        .info-bar {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            color: #475569;
+            min-height: 38px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        /* ── Legend ── */
+        .sim-legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: #718096;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .sim-legend-item { display: flex; align-items: center; gap: 5px; }
+        .sim-swatch {
+            width: 12px; height: 12px; border-radius: 3px; display: inline-block;
+        }
+
+        /* ── Controls ── */
+        .sim-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .sim-btn {
+            padding: 6px 16px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            background: transparent;
+            color: #374151;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-family: inherit;
+        }
+        .sim-btn:hover { background: rgba(0,0,0,0.04); }
+        .sim-btn:disabled { opacity: 0.4; cursor: default; }
+        .sim-controls input[type=range] {
+            width: 90px;
+            accent-color: #6366f1;
+        }
+        .phase-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(219,39,119,0.15);
+            color: #9d174d;
+        }
+        .step-lbl {
+            font-size: 12px;
+            color: #a0aec0;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        /* ── dark mode safety ── */
+        @media (prefers-color-scheme: dark) {
+            .sim-wrapper { border-color: #2d3748; }
+            .sim-header  { border-color: #2d3748; }
+            .sim-header h3 { color: #e2e8f0; }
+            .sim-header p  { color: #718096; }
+            .matrix-grid   { border-color: #4a5568; }
+            .cell          { border-color: #2d3748; color: #718096; }
+            .info-bar      { border-color: #2d3748; color: #94a3b8; }
+            .sim-btn       { border-color: #4a5568; color: #e2e8f0; }
+            .sim-btn:hover { background: rgba(255,255,255,0.05); }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -78,8 +305,6 @@
 
         <h2>Naive Implementation</h2>
 
-        
-
         <p>
             Naive implementation in matrix multiplication is the basic algorithm that computes each element of the result matrix as the sum of pairwise products from the input matrices' corresponding row and column
         </p>
@@ -96,7 +321,7 @@
 
 
         <P>
-            For Naive kernel, we’ll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
+            For Naive kernel, we'll use the grid, block and thread hierarchy to assign each thread a unique entry in the result matrix C. Then that thread will compute the dot product of the corresponding row of A 
             and column of B, and write the result to C. Due to each location of C being written to by only one thread, we  don't have to do any synchronization
         </P>
 
@@ -136,122 +361,38 @@
             The primary limitation lies in memory access patterns. Each thread repeatedly accesses global memory for elements of matrices A and B, resulting in poor memory bandwidth utilization and high latency. Modern GPUs have complex memory hierarchies including shared memory, L1 and L2 caches, and registers, which the naive implementation fails to exploit effectively. Additionally, there's no memory coalescing optimization, meaning adjacent threads may access non-contiguous memory locations, further degrading performance.
         </p>
 
-        <!-- <h4>Whole Code</h4>
+        <!-- ══════════════════════════════════════════════
+             SIMULATION 1 — Naive Kernel
+        ══════════════════════════════════════════════ -->
+        <div class="sim-wrapper" id="sim-naive">
+            <div class="sim-header">
+                <span class="sim-badge naive">Naive Kernel</span>
+                <h3>Global Memory Access — One thread per C[i][j]</h3>
+                <p>Each thread reads a full row of A and column of B directly from global memory — no sharing, no reuse.</p>
+            </div>
+            <div class="sim-body">
+                <div class="matrix-wrap" id="naive-matrices"></div>
 
-        <p>
-            Note: Please replace "" with `<>`
-        </p>
+                <div class="info-bar" id="naive-info">Press Play to start the animation</div>
 
-        <pre class="line-numbers">
-            <code class="language-cpp">
-                #include "cstdlib"
-                #include "hip/hip_runtime.h"
-                #include "iostream"
-                #include "vector"
-                
-                #define HIP_CHECK(exp) do {                                                                                        \
-                  const hipError_t err = exp;                                                                                      \
-                  if (err != hipSuccess) {                                                                                         \
-                    std::cerr << "Hip error: " << hipGetErrorString(err) << " at " << __FILE__ << " : " << __LINE__ << std::endl;  \
-                    std::exit(EXIT_FAILURE);                                                                                       \
-                  }                                                                                                                \
-                } while(0)
-                
-                /*
-                * @info - The function multiply two matrix of size A[MxK] and B[KxN] which will return a matrix C[MxN]
-                * @param - A and B are constant matrix and C will be the output matrix
-                * @param - M, N and K are the size of matrix rows and cols w.r.t matrix   
-                */
-                __global__ void matrixMultiplication(const float* A, const float* B, float* C, int M, int N, int K) {
-                  int row = threadIdx.y + blockIdx.y * blockDim.y;
-                  int col = threadIdx.x + blockIdx.x * blockDim.x;
-                  
-                  if (row < M && col < N) {
-                    float sum = 0.0f;
-                    for(int i = 0; i < K; ++i) {
-                      sum += A[row * K + i] * B[i * N + col];
-                    }
-                    C[row * N + col] = sum;
-                  }
-                }
-                
-                /*
-                * Function - initMatrix
-                * @info - The function create a matrix at host(cpu)
-                */
-                void initMatrix(std::vector<float> &vec, int rows, int cols) {
-                  for (int i = 0; i < rows * cols; ++i) {
-                    vec[i] = static_cast<float>(i + 1);
-                  }
-                }
-                
-                void run_kernel() {
-                  int M = 64;  // Reduced size for easier debugging
-                  int N = 64;
-                  int K = 64;
-                  
-                  // Allocate cpu memory
-                  std::vector<float> h_A(M * K);
-                  std::vector<float> h_B(K * N);
-                  std::vector<float> h_C(M * N);
-                  
-                  
-                  initMatrix(h_A, M, K);
-                  initMatrix(h_B, K, N); 
-                
-                  
-                  // Allocate gpu memory
-                  float *d_A, *d_B, *d_C;
-                  HIP_CHECK(hipMalloc(&d_A, M * K * sizeof(float)));
-                  HIP_CHECK(hipMalloc(&d_B, K * N * sizeof(float)));
-                  HIP_CHECK(hipMalloc(&d_C, M * N * sizeof(float)));
-                  
-                  // copy data from host(cpu) to gpu
-                  HIP_CHECK(hipMemcpy(d_A, h_A.data(), M * K * sizeof(float), hipMemcpyHostToDevice));
-                  HIP_CHECK(hipMemcpy(d_B, h_B.data(), K * N * sizeof(float), hipMemcpyHostToDevice));
-                  
-                  // Launch kernel
-                  dim3 blockSize(16, 16);
-                  dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (M + blockSize.y - 1) / blockSize.y);
-                
-                  // Hip style code 
-                  void *kernelArgs[] = { &d_A, &d_B, &d_C, &M, &N, &K }; 
-                  HIP_CHECK(hipLaunchKernel((const void*)matrixMultiplication, gridSize, blockSize, (void**)kernelArgs, 0, 0));
-                  
-                  // Cuda style code
-                  //matrixMultiplication<<<gridSize, blockSize>>>(d_A, d_B, d_C, M, N, K);
-                
-                  // Check for error while launching kernel
-                  HIP_CHECK(hipGetLastError());
-                  
-                  HIP_CHECK(hipDeviceSynchronize());  
-                  
-                  // Copy result back from GPU to CPU
-                  HIP_CHECK(hipMemcpy(h_C.data(), d_C, M * N * sizeof(float), hipMemcpyDeviceToHost));
-                  
-                  std::cout << "\nResult Matrix C (" << M << "x" << N << "):" << std::endl;
-                  for(int i = 0; i < M; ++i) {
-                    for(int j = 0; j < N; ++j) {
-                      std::cout << h_C[i * N + j] << " ";
-                    }
-                    std::cout << std::endl;
-                  }
-                  
-                  // Clean up
-                  HIP_CHECK(hipFree(d_A));
-                  HIP_CHECK(hipFree(d_B));
-                  HIP_CHECK(hipFree(d_C));  
-                }
-                
-                int main() {
-                  run_kernel();
-                  return 0;
-                }
-            </code>
-        </pre>
+                <div class="sim-legend">
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(59,130,246,0.3)"></span>Row of A accessed</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(245,158,11,0.3)"></span>Column of B accessed</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(16,185,129,0.45)"></span>C[i][j] being written</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(59,130,246,0.1)"></span>Done</div>
+                </div>
 
+                <div class="sim-controls">
+                    <button class="sim-btn" id="naive-play-btn" onclick="naivePlay()">▶ Play</button>
+                    <button class="sim-btn" onclick="naiveStep()">Step →</button>
+                    <button class="sim-btn" onclick="naiveReset()">↺ Reset</button>
+                    <input type="range" min="50" max="800" value="350" id="naive-speed" oninput="naiveSetSpeed(this.value)">
+                    <span style="font-size:12px; color:#718096">Speed</span>
+                    <span class="step-lbl" id="naive-step-lbl">0 / 16</span>
+                </div>
+            </div>
+        </div>
 
-        <br> -->
         <br>
 
         <h2> Shared Memory Cache </h2>
@@ -361,6 +502,73 @@
             </code>
         </pre>
 
+        <!-- ══════════════════════════════════════════════
+             SIMULATION 2 — Shared Memory Kernel
+        ══════════════════════════════════════════════ -->
+        <div class="sim-wrapper" id="sim-shared">
+            <div class="sim-header">
+                <span class="sim-badge shared">Shared Memory Kernel</span>
+                <h3>Tiled Computation — Block loads tile into shared memory, then computes</h3>
+                <p>Threads cooperate: load tile once (pink) → compute dot products locally → move to next tile. Each global read is reused BLOCKSIZE times.</p>
+            </div>
+            <div class="sim-body">
+
+                <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:flex-start; margin-bottom:10px;">
+                    <div class="matrix-container">
+                        <div class="matrix-label">A (4×4)</div>
+                        <div class="matrix-grid" id="sm-A" style="grid-template-columns: repeat(4, 32px)"></div>
+                    </div>
+                    <div class="op-symbol">×</div>
+                    <div class="matrix-container">
+                        <div class="matrix-label">B (4×4)</div>
+                        <div class="matrix-grid" id="sm-B" style="grid-template-columns: repeat(4, 32px)"></div>
+                    </div>
+                    <div class="op-symbol">=</div>
+                    <div class="matrix-container">
+                        <div class="matrix-label">C = A×B (4×4)</div>
+                        <div class="matrix-grid" id="sm-C" style="grid-template-columns: repeat(4, 32px)"></div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; font-size:11px; color:#9d174d; font-weight:600; margin-bottom:4px;">
+                    __shared__ memory (fast on-chip cache, per block)
+                </div>
+                <div class="shmem-panel">
+                    <div class="shmem-block">
+                        <div class="shmem-title">As[ ] — tile of A</div>
+                        <div class="shmem-grid" id="sm-As" style="grid-template-columns: repeat(2, 28px)"></div>
+                    </div>
+                    <div class="shmem-block">
+                        <div class="shmem-title">Bs[ ] — tile of B</div>
+                        <div class="shmem-grid" id="sm-Bs" style="grid-template-columns: repeat(2, 28px)"></div>
+                    </div>
+                    <div class="shmem-block" style="align-self:center; text-align:center;">
+                        <div class="shmem-title">Phase</div>
+                        <span class="phase-badge" id="sm-phase">—</span>
+                        <div style="font-size:10px; color:#a0aec0; margin-top:4px;" id="sm-tile-label">tile 0</div>
+                    </div>
+                </div>
+
+                <div class="info-bar" id="sm-info">Press Play — watch how tiles are loaded into shared memory before computing</div>
+
+                <div class="sim-legend">
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(59,130,246,0.3)"></span>A tile loaded</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(245,158,11,0.3)"></span>B tile loaded</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(219,39,119,0.4)"></span>Shared memory (As/Bs)</div>
+                    <div class="sim-legend-item"><span class="sim-swatch" style="background:rgba(16,185,129,0.5)"></span>C written</div>
+                </div>
+
+                <div class="sim-controls">
+                    <button class="sim-btn" id="sm-play-btn" onclick="smPlay()">▶ Play</button>
+                    <button class="sim-btn" onclick="smStep()">Step →</button>
+                    <button class="sim-btn" onclick="smReset()">↺ Reset</button>
+                    <input type="range" min="100" max="900" value="450" id="sm-speed" oninput="smSetSpeed(this.value)">
+                    <span style="font-size:12px; color:#718096">Speed</span>
+                    <span class="step-lbl" id="sm-step-lbl">0 / ?</span>
+                </div>
+            </div>
+        </div>
+
     <p>
         After comparing the performance of second kernel over first we got about 5x in performance increase in kernel execution.
         The Naive Kernel took about 377ms to execute 4096 x 4096 matrix multiplication and for same size of matrix Shared memory
@@ -388,7 +596,321 @@
     </p>
         
     </main>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+    <script>
+    /* ══════════════════════════════════════════════════════
+       SIMULATION 1 — NAIVE KERNEL
+    ══════════════════════════════════════════════════════ */
+    (function() {
+        const N = 4;
+        const Amat = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
+        const Bmat = [[1,0,0,1],[0,1,1,0],[1,0,0,1],[0,1,1,0]];
+        const Cmat = Array.from({length:N}, (_,i) =>
+            Array.from({length:N}, (_,j) => {
+                let s=0; for(let k=0;k<N;k++) s+=Amat[i][k]*Bmat[k][j]; return s;
+            })
+        );
+
+        let cells = {A:[], B:[], C:[]};
+        let cur = 0, timer = null, speedMs = 350;
+        const total = N * N;
+
+        function build() {
+            const wrap = document.getElementById('naive-matrices');
+            wrap.innerHTML = '';
+            ['A','B','C'].forEach((name, mi) => {
+                const cont = document.createElement('div');
+                cont.className = 'matrix-container';
+                const lbl = document.createElement('div');
+                lbl.className = 'matrix-label';
+                lbl.textContent = name==='A' ? `A (${N}×${N})` : name==='B' ? `B (${N}×${N})` : `C = A×B (${N}×${N})`;
+                cont.appendChild(lbl);
+                const grid = document.createElement('div');
+                grid.className = 'matrix-grid';
+                grid.style.gridTemplateColumns = `repeat(${N}, 32px)`;
+                cells[name] = [];
+                for(let r=0;r<N;r++) {
+                    cells[name].push([]);
+                    for(let c=0;c<N;c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        const mat = name==='A' ? Amat : name==='B' ? Bmat : null;
+                        if(mat) cell.textContent = mat[r][c];
+                        grid.appendChild(cell);
+                        cells[name][r].push(cell);
+                    }
+                }
+                cont.appendChild(grid);
+                if(mi === 0) { wrap.appendChild(cont); const s=document.createElement('div'); s.className='op-symbol'; s.textContent='×'; wrap.appendChild(s); }
+                else if(mi === 1) { wrap.appendChild(cont); const s=document.createElement('div'); s.className='op-symbol'; s.textContent='='; wrap.appendChild(s); }
+                else { wrap.appendChild(cont); }
+            });
+        }
+
+        function clearHighlights() {
+            for(let r=0;r<N;r++) for(let c=0;c<N;c++) {
+                cells.A[r][c].className='cell';
+                cells.B[r][c].className='cell';
+                if(!cells.C[r][c].className.includes('done')) cells.C[r][c].className='cell';
+            }
+        }
+
+        function applyStep(step) {
+            if(step<0||step>=total) return;
+            const row=Math.floor(step/N), col=step%N;
+            clearHighlights();
+            for(let s=0;s<step;s++) {
+                const r2=Math.floor(s/N), c2=s%N;
+                cells.C[r2][c2].className='cell done';
+                cells.C[r2][c2].textContent=Cmat[r2][c2];
+            }
+            for(let k=0;k<N;k++) cells.A[row][k].className='cell row-active';
+            for(let k=0;k<N;k++) cells.B[k][col].className='cell col-active';
+            cells.C[row][col].className='cell current';
+            cells.C[row][col].textContent=Cmat[row][col];
+            document.getElementById('naive-step-lbl').textContent=`${step+1} / ${total}`;
+            document.getElementById('naive-info').textContent=
+                `thread(row=${row}, col=${col})  →  C[${row}][${col}] = Σ A[${row}][k] × B[k][${col}]  =  ${Cmat[row][col]}   (reads ${N} values from global mem for each)`;
+        }
+
+        window.naiveStep = function() {
+            if(cur>=total){ cur=0; clearHighlights(); for(let r=0;r<N;r++) for(let c=0;c<N;c++) cells.C[r][c].textContent=''; }
+            applyStep(cur++);
+        };
+
+        window.naivePlay = function() {
+            if(timer){ clearInterval(timer); timer=null; document.getElementById('naive-play-btn').textContent='▶ Play'; return; }
+            if(cur>=total){ cur=0; clearHighlights(); for(let r=0;r<N;r++) for(let c=0;c<N;c++) cells.C[r][c].textContent=''; }
+            document.getElementById('naive-play-btn').textContent='⏸ Pause';
+            timer = setInterval(()=>{
+                if(cur>=total){
+                    clearInterval(timer); timer=null;
+                    document.getElementById('naive-play-btn').textContent='▶ Play';
+                    document.getElementById('naive-info').textContent=
+                        `Done! All ${total} threads wrote to C. Each made ${N} global memory reads from A + ${N} from B → no data reuse between threads.`;
+                    document.getElementById('naive-step-lbl').textContent=`${total} / ${total}`;
+                    return;
+                }
+                applyStep(cur++);
+            }, speedMs);
+        };
+
+        window.naiveReset = function() {
+            if(timer){ clearInterval(timer); timer=null; }
+            cur=0;
+            for(let r=0;r<N;r++) for(let c=0;c<N;c++) {
+                cells.A[r][c].className='cell'; cells.A[r][c].textContent=Amat[r][c];
+                cells.B[r][c].className='cell'; cells.B[r][c].textContent=Bmat[r][c];
+                cells.C[r][c].className='cell'; cells.C[r][c].textContent='';
+            }
+            document.getElementById('naive-play-btn').textContent='▶ Play';
+            document.getElementById('naive-info').textContent='Press Play to start the animation';
+            document.getElementById('naive-step-lbl').textContent=`0 / ${total}`;
+        };
+
+        window.naiveSetSpeed = function(v) {
+            speedMs = 850 - parseInt(v);
+            if(timer){ clearInterval(timer); timer=null; naivePlay(); }
+        };
+
+        build();
+    })();
+
+
+    /* ══════════════════════════════════════════════════════
+       SIMULATION 2 — SHARED MEMORY KERNEL
+    ══════════════════════════════════════════════════════ */
+    (function() {
+        const SN=4, T=2;
+        const numTiles=SN/T;
+        const smA=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
+        const smB=[[1,0,0,1],[0,1,1,0],[1,0,0,1],[0,1,1,0]];
+        const smC=Array.from({length:SN},(_,i)=>Array.from({length:SN},(_,j)=>{
+            let s=0; for(let k=0;k<SN;k++) s+=smA[i][k]*smB[k][j]; return s;
+        }));
+
+        let cells={A:[],B:[],C:[]};
+        let asCells=[], bsCells=[];
+        let steps=[], cur=0, timer=null, speedMs=450;
+
+        function buildSteps() {
+            steps=[];
+            for(let br=0;br<numTiles;br++) {
+                for(let bc=0;bc<numTiles;bc++) {
+                    for(let bk=0;bk<numTiles;bk++) {
+                        let aCells=[], bCells=[];
+                        for(let r=br*T;r<(br+1)*T;r++) for(let c=bk*T;c<(bk+1)*T;c++) aCells.push([r,c]);
+                        for(let r=bk*T;r<(bk+1)*T;r++) for(let c=bc*T;c<(bc+1)*T;c++) bCells.push([r,c]);
+                        steps.push({type:'load', br, bc, bk, aCells, bCells});
+                        steps.push({type:'compute', br, bc, bk});
+                    }
+                    steps.push({type:'write', br, bc});
+                }
+            }
+        }
+
+        function buildUI() {
+            ['A','B','C'].forEach(name=>{
+                const grid=document.getElementById(`sm-${name}`);
+                grid.innerHTML='';
+                cells[name]=[];
+                const mat=name==='A'?smA:name==='B'?smB:null;
+                for(let r=0;r<SN;r++){
+                    cells[name].push([]);
+                    for(let c=0;c<SN;c++){
+                        const cell=document.createElement('div');
+                        cell.className='cell';
+                        if(mat) cell.textContent=mat[r][c];
+                        grid.appendChild(cell);
+                        cells[name][r].push(cell);
+                    }
+                }
+            });
+            ['As','Bs'].forEach(name=>{
+                const grid=document.getElementById(`sm-${name}`);
+                grid.innerHTML='';
+                const arr=name==='As'?asCells:bsCells;
+                arr.length=0;
+                for(let r=0;r<T;r++){
+                    arr.push([]);
+                    for(let c=0;c<T;c++){
+                        const cell=document.createElement('div');
+                        cell.className='scell empty';
+                        grid.appendChild(cell);
+                        arr[r].push(cell);
+                    }
+                }
+            });
+        }
+
+        function clearAll() {
+            for(let r=0;r<SN;r++) for(let c=0;c<SN;c++){
+                cells.A[r][c].className='cell'; cells.A[r][c].textContent=smA[r][c];
+                cells.B[r][c].className='cell'; cells.B[r][c].textContent=smB[r][c];
+                cells.C[r][c].className='cell'; cells.C[r][c].textContent='';
+            }
+            for(let r=0;r<T;r++) for(let c=0;c<T;c++){
+                asCells[r][c].className='scell empty'; asCells[r][c].textContent='';
+                bsCells[r][c].className='scell empty'; bsCells[r][c].textContent='';
+            }
+            document.getElementById('sm-phase').textContent='—';
+            document.getElementById('sm-tile-label').textContent='tile 0';
+        }
+
+        function restoreDone(upTo) {
+            for(let s=0;s<upTo;s++){
+                const st=steps[s];
+                if(st.type==='write'){
+                    for(let r=st.br*T;r<(st.br+1)*T;r++) for(let c=st.bc*T;c<(st.bc+1)*T;c++){
+                        cells.C[r][c].className='cell done';
+                        cells.C[r][c].textContent=smC[r][c];
+                    }
+                }
+            }
+        }
+
+        function applyStep(si) {
+            if(si<0||si>=steps.length) return;
+            const step=steps[si];
+            // clear A/B highlights
+            for(let r=0;r<SN;r++) for(let c=0;c<SN;c++){
+                cells.A[r][c].className='cell';
+                cells.B[r][c].className='cell';
+                if(!cells.C[r][c].className.includes('done')) cells.C[r][c].className='cell';
+            }
+            restoreDone(si);
+
+            if(step.type==='load'){
+                document.getElementById('sm-phase').textContent='load tile';
+                document.getElementById('sm-tile-label').textContent=`block(${step.br},${step.bc}) tile ${step.bk}`;
+                step.aCells.forEach(([r,c])=>cells.A[r][c].className='cell tile-a');
+                step.bCells.forEach(([r,c])=>cells.B[r][c].className='cell tile-b');
+                step.aCells.forEach(([r,c],i)=>{
+                    const lr=Math.floor(i/T), lc=i%T;
+                    asCells[lr][lc].className='scell loaded';
+                    asCells[lr][lc].textContent=smA[r][c];
+                });
+                step.bCells.forEach(([r,c],i)=>{
+                    const lr=Math.floor(i/T), lc=i%T;
+                    bsCells[lr][lc].className='scell loaded';
+                    bsCells[lr][lc].textContent=smB[r][c];
+                });
+                document.getElementById('sm-info').textContent=
+                    `Block(${step.br},${step.bc}) tile ${step.bk}: threads cooperatively load tile of A [rows ${step.br*T}–${step.br*T+T-1}, cols ${step.bk*T}–${step.bk*T+T-1}] and tile of B into __shared__ memory → __syncthreads()`;
+            }
+            else if(step.type==='compute'){
+                document.getElementById('sm-phase').textContent='compute';
+                document.getElementById('sm-tile-label').textContent=`block(${step.br},${step.bc}) tile ${step.bk}`;
+                for(let r=0;r<T;r++) for(let c=0;c<T;c++){
+                    asCells[r][c].className='scell active';
+                    bsCells[r][c].className='scell active';
+                }
+                for(let r=step.br*T;r<(step.br+1)*T;r++) for(let c=step.bc*T;c<(step.bc+1)*T;c++)
+                    cells.C[r][c].className='cell cur';
+                document.getElementById('sm-info').textContent=
+                    `Block(${step.br},${step.bc}) tile ${step.bk}: each thread computes partial sum using As[] and Bs[] — reads from fast shared memory (~5 ns), not global memory (~300 ns)! → __syncthreads()`;
+            }
+            else if(step.type==='write'){
+                document.getElementById('sm-phase').textContent='write C';
+                document.getElementById('sm-tile-label').textContent=`block(${step.br},${step.bc}) done`;
+                for(let r=step.br*T;r<(step.br+1)*T;r++) for(let c=step.bc*T;c<(step.bc+1)*T;c++){
+                    cells.C[r][c].className='cell cur';
+                    cells.C[r][c].textContent=smC[r][c];
+                }
+                for(let r=0;r<T;r++) for(let c=0;c<T;c++){
+                    asCells[r][c].className='scell empty'; asCells[r][c].textContent='';
+                    bsCells[r][c].className='scell empty'; bsCells[r][c].textContent='';
+                }
+                document.getElementById('sm-info').textContent=
+                    `Block(${step.br},${step.bc}): all tiles accumulated → write C[${step.br*T}–${step.br*T+T-1}][${step.bc*T}–${step.bc*T+T-1}] to global memory. Each global read was reused ${T}× — that's the speedup!`;
+            }
+            document.getElementById('sm-step-lbl').textContent=`${si+1} / ${steps.length}`;
+        }
+
+        window.smStep = function() {
+            if(cur>=steps.length){ cur=0; clearAll(); }
+            applyStep(cur++);
+        };
+
+        window.smPlay = function() {
+            if(timer){ clearInterval(timer); timer=null; document.getElementById('sm-play-btn').textContent='▶ Play'; return; }
+            if(cur>=steps.length){ cur=0; clearAll(); }
+            document.getElementById('sm-play-btn').textContent='⏸ Pause';
+            timer=setInterval(()=>{
+                if(cur>=steps.length){
+                    clearInterval(timer); timer=null;
+                    document.getElementById('sm-play-btn').textContent='▶ Play';
+                    document.getElementById('sm-info').textContent=
+                        `Done! Tile size=${T}×${T}: each global memory value was loaded once into shared mem and reused ${T} times. This is why the shared memory kernel is ~5× faster (377ms → 81ms on 4096×4096)!`;
+                    document.getElementById('sm-step-lbl').textContent=`${steps.length} / ${steps.length}`;
+                    return;
+                }
+                applyStep(cur++);
+            }, speedMs);
+        };
+
+        window.smReset = function() {
+            if(timer){ clearInterval(timer); timer=null; }
+            cur=0; clearAll();
+            document.getElementById('sm-play-btn').textContent='▶ Play';
+            document.getElementById('sm-info').textContent='Press Play — watch how tiles are loaded into shared memory before computing';
+            document.getElementById('sm-step-lbl').textContent=`0 / ${steps.length}`;
+        };
+
+        window.smSetSpeed = function(v) {
+            speedMs=950-parseInt(v);
+            if(timer){ clearInterval(timer); timer=null; smPlay(); }
+        };
+
+        buildSteps();
+        buildUI();
+        document.getElementById('sm-step-lbl').textContent=`0 / ${steps.length}`;
+    })();
+    </script>
+
 </body>
+</html>
