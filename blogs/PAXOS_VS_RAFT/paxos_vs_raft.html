@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Battle of Consensus</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="../../style.css"> 
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        .diagram-container {
+            margin: 40px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .diagram-title {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #0056b3;
+        }
+        .phase-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0056b3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .problem-box {
+            background-color: #fff0f0;
+            border-left: 4px solid #cc0000;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .concept-box {
+            background-color: #fdf5e6;
+            border-left: 4px solid #f0ad4e;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .proposal-number-box {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.2em;
+        }
+        .proposal-part {
+            padding: 10px 20px;
+            border: 2px solid #333;
+        }
+        .round-part {
+            background-color: #e6ffe6;
+            border-right: none;
+        }
+        .server-part {
+            background-color: #e6f2ff;
+        }
+
+        /* Interactive Simulator Styles */
+        .sim-container {
+            border: 2px solid #0056b3;
+            background-color: #f8faff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            font-family: monospace;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .sim-controls { margin-bottom: 15px; display: flex; gap: 10px; }
+        .sim-controls button { padding: 10px 15px; cursor: pointer; background: #0056b3; color: white; border: none; border-radius: 4px; font-weight: bold; font-family: inherit;}
+        .sim-controls button:hover { background: #004494; }
+        .sim-controls button:disabled { background: #ccc; cursor: not-allowed; }
+        .sim-status { background: #fff; padding: 12px; border: 1px solid #ddd; border-left: 4px solid #0056b3; margin-bottom: 10px; font-weight: bold; font-size: 1.1em;}
+        .sim-rpc { background: #fff3cd; padding: 12px; border: 1px solid #ffeeba; margin-bottom: 20px; color: #856404; font-size: 1.1em;}
+        .sim-log-title { font-weight: bold; margin-bottom: 5px; color: #333; font-size: 1.1em;}
+        .sim-log-row { display: flex; gap: 8px; margin-bottom: 20px; min-height: 55px; flex-wrap: wrap; }
+        .sim-block { border: 2px solid #333; background: white; padding: 5px; text-align: center; border-radius: 4px; width: 65px; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); transition: all 0.3s ease;}
+        .sim-block .idx { font-size: 0.85em; color: #666; border-bottom: 1px solid #ccc; margin-bottom: 4px; padding-bottom: 2px;}
+        .sim-block .term { font-size: 1.3em; font-weight: bold; color: #000; }
+        .sim-block.match { background: #d4edda; border-color: #28a745; transform: scale(1.1); box-shadow: 0 0 10px rgba(40,167,69,0.5);}
+        .sim-block.mismatch { background: #f8d7da; border-color: #dc3545; transform: scale(1.1); box-shadow: 0 0 10px rgba(220,53,69,0.5); }
+        .sim-block.new { background: #cce5ff; border-color: #007bff; animation: popIn 0.4s ease forwards;}
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Paxos vs Raft: The Battle of Consensus</h1>
+        <span class="date">Apr 4, 2026</span>
+        <br><br>
+        <a href="../../index.html" class="about-me-link">Home</a>
+        &nbsp; &nbsp;
+    </header>
+    <main>
+        <p>
+        When we talk about large-scale distributed systems, concepts like horizontal scaling, data replication, decoupling, and data reliability comes in the mind but at the heart it lies the idea of consensus algorithms.
+        A consensus algorithm is a process that allows multiple nodes (servers) in a distributed system to agree on a single data value or a shared system state, ensuring the system behaves consistently as a whole.
+        This is crucial because, in distributed environments, data is spread across different nodes, and due to network delays, failures, or simultaneous updates, inconsistencies can easily arise. Without a way to achieve agreement,
+        different users might experience different results from the same system, leading to unreliable behavior. Consensus algorithms address this challenge by ensuring all nodes eventually agree on the same state, thereby maintaining consistency, reliability, and trust across the system.
+        </p>
+
+        <h3> The Replicated State Machine </h3>
+        <p>
+        To understand consensus, we have to talk about State Machines. In a distributed environment, a State Machine is a service that starts at an initial state, receives a sequence of commands, and transitions to a new state based on those commands.
+        The goal of a consensus algorithm like Raft, Paxos and Accord is to manage a replicated log. If every node processes the same commands in the exact same order, they will all end up in the same state and in case if there is system crash from one
+        of node in cluster other nodes will serve the data correctly.          
+        </p>
+
+        <h3> Paxos </h3>
+
+        <p>
+        At its heart, Paxos is the foundational handshake that allows a messy cluster of individual computers to act as a single, reliable unit. Whether you are looking at Single Decree Paxos, Multi-Paxos, or the high-performance EPaxos(It's a leaderless approach) used in databases like Cassandra, the goal is always the same:
+        reaching a rock-solid consensus even when the "nodes" in your network are failing or flaking out. To keep things from descending into digital chaos, the protocol operates under two strict ground rules. First is Safety, which ensures that once the group commits to a single value, it is permanently
+        locked in—there are no "do-overs," no second-guessing, and no false alarms where a server thinks a decision was made when it actually wasn't. Second is Liveness, the functional promise that as long as a majority of your servers are awake and talking to each other, the system won't just spin its wheels;
+        it will eventually land on a decision and ensure every other server in the pack gets the memo.
+        </p>
+
+        <p>
+        Now Lets talk about components in Paxos:
+        </p>
+
+        <ul>
+            <li><h4>Proposers</h4></li>
+        </ul>
+
+        <p>
+            * Proposers are initiators of consensus algorithum processes:
+            <br><br>
+            <b>1) Active Role of Processors</b>: They are described active beacuse they take first step. They do not wait for instructions from other nodes. Insted they put forth / suggest some value that they want entire system to agree.
+            <br><br>
+            <b>2) Handling client requests</b>: When external client (like a User / Application) wants to write data or peform an action the proposer is entry poing. It recieves a request and start a multi phase process to get the request chosen by cluseter
+        </p>
+
+        <ul>
+            <li><h4>Acceptors</h4></li>
+        </ul>
+
+        <p>
+            * Acceptors recieves values from proposers and responds to them based on given values
+            <br><br>
+            <b>1) Passive Role of Acceptors</b>: Acceptors doesn't take part in initiation process for communication insted they sit back and wait proposer to send message
+            <br><br>
+            <b>2) Voting and Consensus</b>: Every response from acceptor is essentialy a vote. Consensus is reached only when majority(quorum) of acceptors agrees on same value.
+            <br><br>
+            <b>3) State and Storage</b>: Acceptors are responsible for storing the current "state" of the decession process this includes the heighest proposal number have promised to support and the actual value that has been chosen
+            <br><br>
+            <b>4) Knowledge of outcome</b>: The Acceptor want to know which value has been chosen beacuse they store the state, they serve as the source of the truth for which value eventually own the election.
+        </p>
+
+        <p>
+            <b>*</b> Let's talk about pitfalls the paxos algorithum have on split vlotes and conflicting choices.
+        </p>
+
+        <h3> The Two Major Pitfalls: Split Votes and Conflicting Choices </h3>
+        <p>
+            Before diving into the actual flow of Paxos, it is helpful to look at two naive approaches to consensus and understand why they fail. These pitfalls perfectly illustrate why Paxos needs to be as complex as it is.
+        </p>
+
+        <div class="problem-box">
+            <h4>Problem 1: Split Votes (What if an Acceptor only accepts the FIRST value?)</h4>
+            <p>
+                Imagine a rule where an Acceptor is completely loyal to the very first proposal it sees and rejects everything else. If multiple Proposers speak up at the exact same time, the votes will get hopelessly split.
+            </p>
+            <ul>
+                <li>Server 1 proposes "Red", and Servers 1 & 2 accept it.</li>
+                <li>Server 3 proposes "Blue", and Servers 3 & 4 accept it.</li>
+                <li>Server 5 proposes "Green", and Server 5 accepts it.</li>
+            </ul>
+            <p>
+                Because no single color reached a majority (3 votes), and the Acceptors refuse to change their minds, the system is permanently deadlocked. <b>The Takeaway:</b> To prevent split votes, Acceptors <i>must</i> be allowed to change their minds and accept multiple (different) values over time.
+            </p>
+        </div>
+
+        <div class="problem-box">
+            <h4>Problem 2: Conflicting Choices (What if an Acceptor accepts EVERY value?)</h4>
+            <p>
+                To fix the split vote problem, what if we make Acceptors total people-pleasers, accepting every new value that comes their way? This introduces a catastrophic safety violation.
+            </p>
+            <ul>
+                <li>Server 1 proposes "Red". Servers 1, 2, and 3 accept it. Since that is a majority, <b>"Red" is officially chosen</b>.</li>
+                <li>Later, Server 5 wakes up and proposes "Blue". Servers 3, 4, and 5 accept it (Server 3 overwrites its previous choice). Since that is also a majority, <b>"Blue" is officially chosen</b>.</li>
+            </ul>
+            <p>
+                We now have two chosen values! This breaks the fundamental rule of consensus. <b>The Takeaway:</b> Once a value has been chosen by a majority, any future proposals must propose that exact same value. To enforce this, Proposers cannot just blindly shout their values; they must first "ask around" to see if a value has already been chosen. This necessitates a <b>2-Phase Protocol</b>.
+            </p>
+        </div>
+
+        <h3>The Flow of Basic Paxos</h3>
+        <p>
+            To successfully agree on a single value without conflicts, Paxos breaks the negotiation down into two distinct phases. This ensures that even if multiple proposers try to talk at once, the system gracefully handles the collision based on proposal numbers.
+        </p>
+
+        <div class="phase-box">
+            <h4>Phase 1: The Prepare Phase (Asking for Promises)</h4>
+            <p>
+                <b>The Proposer</b> starts by choosing a new proposal number (let's call it <code>n</code>). It broadcasts a <code>Prepare(n)</code> message to all Acceptors.
+                <br><br>
+                <b>The Acceptor</b> receives this message. It checks its stable storage to see the highest proposal number it has ever responded to (<code>minProposal</code>). If the new <code>n</code> is higher, the Acceptor makes a promise: "I will ignore any future proposals with a number less than <code>n</code>." It updates its <code>minProposal</code> to <code>n</code> and replies to the Proposer. If this Acceptor had already accepted a value from a previous round, it includes that <code>acceptedProposal</code> and <code>acceptedValue</code> in its reply so the new Proposer knows about it.
+            </p>
+        </div>
+
+        <div class="phase-box">
+            <h4>Phase 2: The Accept Phase (Making the Request)</h4>
+            <p>
+                <b>The Proposer</b> waits until it receives promises from a <i>majority</i> of the Acceptors. If any of those Acceptors returned an already-accepted value, the Proposer is bound by the rules of Paxos to abandon its own value and adopt the value associated with the highest proposal number returned. If no values were returned, the Proposer can use its own original value. It then broadcasts an <code>Accept(n, value)</code> message to all servers.
+                <br><br>
+                <b>The Acceptor</b> receives the request. As long as it hasn't seen a higher proposal number in the meantime (meaning <code>n &ge; minProposal</code>), it officially accepts the value. It saves the <code>acceptedProposal</code> and <code>acceptedValue</code> to its disk (stable storage) and replies. 
+                <br><br>
+                Once the Proposer receives successful replies from a majority of Acceptors, the <b>value is officially chosen</b>. If it gets rejected because an Acceptor saw a higher number from a competing Proposer, it must go back to Phase 1 and try again with an even higher number.
+            </p>
+        </div>
+
+        <h3>The Crucial Role of Proposal Numbers</h3>
+        <p>
+            As seen in the phases above, every proposal is assigned a unique number (<code>n</code>). The absolute golden rule here is that <i>higher numbers take priority over lower numbers</i>. 
+        </p>
+        <p>
+            Because multiple Proposers might be shouting at once, a Proposer must be able to generate a new proposal number that is higher than anything it has ever seen or used before. A very simple and common approach to guarantee uniqueness across the entire distributed system is to combine a local round counter with the server's unique ID:
+        </p>
+
+        <div class="proposal-number-box">
+            <div class="proposal-part round-part">Round Number</div>
+            <div class="proposal-part server-part">Server Id</div>
+        </div>
+
+        <p>
+            Here is how a server manages this:
+        </p>
+        <ul>
+            <li>Each server keeps track of a variable called <code>maxRound</code>, which represents the largest Round Number it has seen so far.</li>
+            <li>To generate a brand new proposal number, the server simply increments its <code>maxRound</code> and concatenates it with its own <code>Server Id</code>. (For example, if maxRound is 5 and Server Id is A, the proposal number is 5A).</li>
+            <li><b>Crucial Safety Detail:</b> Proposers must persist their <code>maxRound</code> to stable storage (disk). If a server crashes and restarts, it absolutely cannot reuse an old proposal number, or it will violate the safety guarantees of Paxos!</li>
+        </ul>
+        
+        <p>Here is a visual breakdown of the full communication flow:</p>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Basic Paxos Flow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant P as Proposers
+                    participant A as Acceptors
+
+                    Note over P: 1) Choose new proposal number n
+                    
+                    P->>A: 2) Broadcast Prepare(n) to all servers
+                    
+                    Note over A: 3) Respond to Prepare(n):<br/>- If n > minProposal then minProposal = n<br/>- Return(acceptedProposal, acceptedValue)
+                    
+                    A-->>P: 
+                    
+                    Note over P: 4) When responses received from majority:<br/>- If any acceptedValues returned, replace<br/>value with acceptedValue<br/>for highest acceptedProposal
+                    
+                    P->>A: 5) Broadcast Accept(n, value) to all servers
+                    
+                    Note over A: 6) Respond to Accept(n, value):<br/>- If n ≥ minProposal then<br/>acceptedProposal = minProposal = n<br/>acceptedValue = value<br/>- Return(minProposal)
+                    
+                    A-->>P: 
+                    
+                    Note over P: 6) When responses received from majority:<br/>- Any rejections (result > n)? goto (1)<br/>- Otherwise, value is chosen
+                    
+                    Note over P,A: Acceptors must record minProposal, acceptedProposal, and acceptedValue on stable storage (disk)
+            </div>
+        </div>
+
+        <p> <b>Paxos Simulation:</b> <a href="paxos.html" target="_blank"> [Paxos] </a> </p>
+
+        <hr>
+
+        <h3>Raft</h3>
+        <p>
+            If Paxos is so powerful and provides mathematically proven safety guarantees, why did the distributed systems world need another consensus algorithm? The answer lies in human comprehension and the harsh realities of practical software engineering. 
+        </p>
+        <p>
+            While Paxos is elegant in theory, it is notoriously difficult to understand, and even harder to implement correctly. Furthermore, the original Paxos paper focuses heavily on "Single-Decree Paxos." To build a continuous Replicated State Machine, you have to chain these decisions together into "Multi-Paxos," which often led to complex, buggy, ad-hoc implementations. 
+        </p>
+        <p>
+            Enter <b>Raft</b>. Created by Diego Ongaro and John Ousterhout, Raft was designed with one overarching goal: <b>Understandability</b>. It solves the "understandability gap" of Paxos by tackling the consensus puzzle through two major philosophical shifts: <i>Problem Decomposition</i> (breaking it into Leader Election, Log Replication, and Safety) and enforcing a <i>Strong Leader Paradigm</i>.
+        </p>
+
+        <div class="concept-box">
+            <h4>The Goal of Raft: Fault Tolerance</h4>
+            <p>
+                The ultimate goal is strict fault tolerance. If you have a cluster of 5 servers and 2 of them crash, the remaining 3 servers will still maintain the correct state machine and continue serving data seamlessly to the clients.
+            </p>
+        </div>
+
+        <h4>Terms and RPCs (The Foundation of Communication)</h4>
+        <ul>
+            <li><b>Terms:</b> Raft divides time into logical "Terms" (acting much like Paxos proposal numbers). A Term refers to the election term. If a leader goes down, a new election is held and the term changes (i.e., <code>term += 1</code>). The term keeps incrementing until a new leader is successfully elected.</li>
+            <li><b>RPCs:</b> Servers in Raft use only 2 main RPC (Remote Procedure Call) mechanisms to communicate: 
+                <br>1) <code>RequestVote</code> (used by Candidates during elections)
+                <br>2) <code>AppendEntries</code> (used by the Leader for sending log data, and when empty, it acts as a heartbeat).
+            </li>
+        </ul>
+
+        <h4>Server States (The Roles)</h4>
+        <p>
+            By abandoning the peer-to-peer chaos of Paxos, Raft dictates that every server must be in one of exactly three states at any given time:
+        </p>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Raft Server State Transitions</div>
+            <div class="mermaid">
+                stateDiagram-v2
+                    [*] --> Follower: Start
+                    Follower --> Candidate: No Heartbeat (Timeout)
+                    Candidate --> Leader: Win Election
+                    Leader --> Follower: Discover Higher Term
+                    Candidate --> Follower: Discover Higher Term
+                    Candidate --> Candidate: Timeout (New Election)
+            </div>
+        </div>
+
+        <ul>
+            <li><b>The Follower:</b> The default starting state. Followers are entirely passive. They only respond to RPCs from Leaders and Candidates. If they don't receive a heartbeat in time, they transition to a Candidate.</li>
+            <li><b>The Candidate:</b> A transitional state. The Candidate asks others for votes. If it wins a majority, it becomes the Leader.</li>
+            <li><b>The Leader:</b> The absolute authority. The Leader accepts commands from the client, sends logs to followers, and actively sends continuous heartbeats to tell followers, "I am alive, do not start an election."</li>
+        </ul>
+
+        <h3>The Flow of Raft</h3>
+        
+        <div class="phase-box">
+            <h4>Phase 1: Leader Election</h4>
+            <p>
+                Because all nodes start as Followers with no Leader sending heartbeats, an election timer will eventually run out. The first node to time out initiates an election.
+            </p>
+            <div class="mermaid">
+                graph TD
+                    A[Become Candidate] --> B[Current Term++ <br/> Vote for self]
+                    B --> C[Send a request to vote <br/> to other servers]
+                    C -->|Timeout| B
+                    C -->|Votes from majority| D[Become a Leader <br/> Send heartbeats]
+                    C -->|RPC from leader| E[Become a Follower]
+            </div>
+            <p><b>Election Correctness is guaranteed by two properties:</b></p>
+            <ul>
+                <li><b>Safety:</b> Raft allows at most 1 winner per term. Each server gives only one vote per term (first-come, first-served), and a strict majority is required to win.</li>
+                <li><b>Liveness:</b> To ensure some candidate eventually wins (and avoid split-vote stalemates), Raft chooses election timeouts randomly within a range [T, 2T] (e.g., 150-300ms). The early time-out server sends an RPC to others and asks them to vote before their own timers expire. This works exceptionally well if T is much greater than the network broadcast time.</li>
+            </ul>
+        </div>
+
+        <div class="phase-box">
+            <h4>Phase 2: Log Replication (Working Normal Operation)</h4>
+            <p>Once a leader is elected, normal operation begins. The State Machine (SM) syncs via the Leader (L) in a two-step process:</p>
+            <ul>
+                <li><b>Step I:</b> When a user sends a command to the leader, the leader first saves that command in its own log. It then sends this data to the other nodes via an <code>AppendEntries</code> RPC, and those nodes also save the data into their respective logs.</li>
+                <li><b>Step II:</b> Once safely replicated across a majority, all the nodes execute the command to their state machines. The Leader then returns a successful response to the user.</li>
+            </ul>
+        </div>
+
+        <h3>Log Consistency and Leader Completeness</h3>
+        <p>
+            Raft's strictness shines in how it handles crashes and network partitions. It enforces a <b>Log Matching Property</b>: the goal is a high level of consistency between logs. If log entries on different servers have the same <code>index</code> and <code>term</code>, they are guaranteed to store the exact same command, and their logs are identical for <i>all preceding entries</i>.
+        </p>
+
+        <h4>Append Entries Consistency Checks</h4>
+        <p>
+            When the Leader sends an <code>AppendEntries</code> RPC, it includes the <code>&lt;index, term&gt;</code> of the entry immediately preceding the new one. The follower must contain matching entries. If it doesn't match, the follower rejects the request. The leader then steps back, trying again with a lower (older) index until they find the point where their logs match, and overwrites the follower's log from there.
+        </p>
+        
+        <div class="concept-box">
+            <b>Example 1 (Clean Accept):</b>
+            <br>Leader Log: <code>[Term 1] [Term 1] [Term 2] [Term 3]</code>
+            <br>Follower Log: <code>[Term 1] [Term 1] [Term 2]</code>
+            <br><i>Result: Follower accepts the next entry because index 3 (Term 2) perfectly matches.</i>
+            <br><br>
+            <b>Example 2 (Reject & Rewrite):</b>
+            <br>Leader Log: <code>[Term 1] [Term 2] [Term 3] [Term 4]</code>
+            <br>Follower Log: <code>[Term 1] [Term 1] [Term 1] [Term 1] [Term 1] [Term 1] [Term 1]</code>
+            <br><i>Result: The follower rejects the new append because index 3 doesn't match. To maintain consistency, the Leader forces the Follower to overwrite its log entirely to match the Leader's state.</i>
+        </div>
+
+        <div class="sim-container">
+            <h2 style="margin-top: 0; color: #0056b3;">Interactive Raft RPC Simulator</h2>
+            <p style="margin-bottom: 20px; color: #555;">Step through the exact RPC communication to see how the Leader enforces the Log Matching Property.</p>
+            
+            <div class="sim-controls">
+                <button id="btn-scen1" onclick="loadScenario(1)">Scenario 1: Clean Accept</button>
+                <button id="btn-scen2" onclick="loadScenario(2)">Scenario 2: Reject & Rewrite</button>
+            </div>
+            
+            <div id="sim-status" class="sim-status">Select a scenario above to begin.</div>
+            <div id="sim-rpc" class="sim-rpc">RPC: Waiting to start...</div>
+            
+            <div class="sim-log-title">Leader Log:</div>
+            <div id="leader-log" class="sim-log-row"></div>
+            
+            <div class="sim-log-title">Follower Log:</div>
+            <div id="follower-log" class="sim-log-row"></div>
+            
+            <button id="next-step-btn" onclick="nextStep()" style="padding: 12px 20px; font-size: 1.1em; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;" disabled>Next Step</button>
+        </div>
+
+        <script>
+            const simData = {
+                1: [
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}, {i:4, t:3}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}],
+                        status: "Initial state. Leader is ready to send the latest entry (Index 4).",
+                        rpc: "Waiting...",
+                        highlightIdx: null, highlightType: null
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}, {i:4, t:3}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}],
+                        status: "Leader sends AppendEntries. Follower checks prevLogIndex 3. Term 2 matches Term 2! SUCCESS.",
+                        rpc: "AppendEntries(prevLogIndex: 3, prevLogTerm: 2, entries: [{index: 4, term: 3}])",
+                        highlightIdx: 3, highlightType: "match"
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}, {i:4, t:3}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:2}, {i:4, t:3, new: true}],
+                        status: "Follower accepts the request and appends the new entry. Logs are in sync.",
+                        rpc: "Success! Follower replied 'true'.",
+                        highlightIdx: 4, highlightType: "new"
+                    }
+                ],
+                2: [
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:2}, {i:3, t:3}, {i:4, t:4}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:1}, {i:4, t:1}, {i:5, t:1}, {i:6, t:1}, {i:7, t:1}],
+                        status: "Initial state. Leader wants to append Index 4, but Follower is filled with stale Term 1 data.",
+                        rpc: "Waiting...",
+                        highlightIdx: null, highlightType: null
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:2}, {i:3, t:3}, {i:4, t:4}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:1}, {i:4, t:1}, {i:5, t:1}, {i:6, t:1}, {i:7, t:1}],
+                        status: "Leader tries sending Index 4. Follower checks prevLogIndex 3. Term 1 != Term 3! REJECTED.",
+                        rpc: "AppendEntries(prevLogIndex: 3, prevLogTerm: 3, entries: [{index: 4, term: 4}])",
+                        highlightIdx: 3, highlightType: "mismatch"
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:2}, {i:3, t:3}, {i:4, t:4}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:1}, {i:4, t:1}, {i:5, t:1}, {i:6, t:1}, {i:7, t:1}],
+                        status: "Leader decrements nextIndex to 3. Follower checks prevLogIndex 2. Term 1 != Term 2! REJECTED.",
+                        rpc: "AppendEntries(prevLogIndex: 2, prevLogTerm: 2, entries: [{index: 3, term: 3}, ...])",
+                        highlightIdx: 2, highlightType: "mismatch"
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:2}, {i:3, t:3}, {i:4, t:4}],
+                        follower: [{i:1, t:1}, {i:2, t:1}, {i:3, t:1}, {i:4, t:1}, {i:5, t:1}, {i:6, t:1}, {i:7, t:1}],
+                        status: "Leader decrements nextIndex to 2. Follower checks prevLogIndex 1. Term 1 == Term 1! MATCH.",
+                        rpc: "AppendEntries(prevLogIndex: 1, prevLogTerm: 1, entries: [{index: 2, term: 2}, ...])",
+                        highlightIdx: 1, highlightType: "match"
+                    },
+                    {
+                        leader: [{i:1, t:1}, {i:2, t:2}, {i:3, t:3}, {i:4, t:4}],
+                        follower: [{i:1, t:1}, {i:2, t:2, new:true}, {i:3, t:3, new:true}, {i:4, t:4, new:true}],
+                        status: "Follower deletes stale entries (Index 2-7) and appends Leader's correct entries. Logs are in sync!",
+                        rpc: "Success! Follower replied 'true'.",
+                        highlightIdx: null, highlightType: null
+                    }
+                ]
+            };
+
+            let currentScenario = null;
+            let currentStep = 0;
+
+            function renderLog(elementId, logArray, highlightIdx, highlightType) {
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+                logArray.forEach(entry => {
+                    const block = document.createElement('div');
+                    block.className = 'sim-block';
+                    if (entry.i === highlightIdx && highlightType) {
+                        block.classList.add(highlightType);
+                    } else if (entry.new) {
+                        block.classList.add('new');
+                    }
+                    block.innerHTML = `<div class="idx">Idx: ${entry.i}</div><div class="term">T${entry.t}</div>`;
+                    container.appendChild(block);
+                });
+            }
+
+            function loadScenario(scenNum) {
+                currentScenario = scenNum;
+                currentStep = 0;
+                document.getElementById('btn-scen1').style.opacity = scenNum === 1 ? '1' : '0.5';
+                document.getElementById('btn-scen2').style.opacity = scenNum === 2 ? '1' : '0.5';
+                document.getElementById('next-step-btn').disabled = false;
+                renderStep();
+            }
+
+            function nextStep() {
+                if (!currentScenario) return;
+                const maxSteps = simData[currentScenario].length - 1;
+                if (currentStep < maxSteps) {
+                    currentStep++;
+                    renderStep();
+                }
+                if (currentStep === maxSteps) {
+                    document.getElementById('next-step-btn').disabled = true;
+                    document.getElementById('next-step-btn').innerText = "Simulation Complete";
+                }
+            }
+
+            function renderStep() {
+                const data = simData[currentScenario][currentStep];
+                document.getElementById('sim-status').innerText = data.status;
+                document.getElementById('sim-rpc').innerText = data.rpc;
+                
+    
+                const btn = document.getElementById('next-step-btn');
+                if (currentStep < simData[currentScenario].length - 1) {
+                    btn.innerText = `Next Step (${currentStep + 1}/${simData[currentScenario].length - 1})`;
+                }
+                
+                renderLog('leader-log', data.leader, null, null);
+                renderLog('follower-log', data.follower, data.highlightIdx, data.highlightType);
+            }
+            
+            document.getElementById('leader-log').innerHTML = '<div style="color:#888; margin-top:15px;">- Select a scenario -</div>';
+            document.getElementById('follower-log').innerHTML = '<div style="color:#888; margin-top:15px;">- Select a scenario -</div>';
+        </script>
+        <h4>Leader Completeness (Safety Check)</h4>
+        <p>
+            How do we know a newly elected leader has a complete log? <b>Servers with incomplete logs must not be elected.</b>
+        </p>
+        <ul>
+            <li>Once a log entry is committed by a majority, all future leaders <i>must</i> store that entry.</li>
+            <li>To enforce this, a Candidate must include the index and term of its last log entry in its <code>RequestVote</code> RPC.</li>
+            <li>When a server receives a vote request, it checks its own log. It will deny its vote if its own log is more "up-to-date" than the candidate's.</li>
+            <li>Logs are ranked dynamically by checking <code>&lt;lastTerm, lastIndex&gt;</code>.</li>
+        </ul>
+
+        <p> <b>Raft Simulation:</b> <a href="https://raft.github.io/" target="_blank"> [Raft] </a> </p>
+
+
+        <h2>References</h2>
+        <ol>
+            <li><a href="https://youtube.com/watch?v=vYp4LYbnnW8" target="_blank"> Raft By Diego Ongaro </a></li>
+            <li><a href="https://raft.github.io/" target="_blank"> raft.github.io </a></li>
+            <li><a href="https://raft.github.io/raft.pdf" target="_blank"> raft paper </a></li>
+            <li><a href="https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/" target="_blank"> GeeksForGeeks: Paxos vs Raft </a></li>
+            <li><a href="https://www.youtube.com/watch?v=JEpsBg0AO6o&list=PL6vmIsTqsHFSMMjU2XkNR6A442c0QMW0g" target="_blank"> Paxos & Raft Playlist </a></li>
+            <li><a href="https://cwiki.apache.org/confluence/download/attachments/188744725/Accord.pdf" target="_blank"> Accord Protocol </a></li>
+            <li><a href="https://github.com/apache/cassandra-accord" target="_blank"> Accord Protocol For Java Geeks </a></li>
+            <li><a href="https://www.youtube.com/watch?v=IujMVjKvWP4" target="_blank"> Raft Simplified By Ankush </a></li>
+            <li><a href="https://www.youtube.com/watch?v=JEpsBg0AO6o" target="_blank"> Paxos By Diego Ongaro </a></li>
+            <li><a href="https://mwhittaker.github.io/blog/single_decree_paxos/" target="_blank"> Single Decree Paxos Blog </a></li>
+        </ol>
+    </main>
+
+</body>
+</html>

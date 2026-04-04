@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paxos Consensus — 5 Acceptors</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face {
+    font-family: 'NIXGONM-Vb';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/NIXGONM-Vb.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg: #FFFFFF;
+    --beige: #EDEBDF;
+    --text: #413E3E;
+    --black: #000000;
+    --orange: #ff6800;
+    --orange-light: #fff2cf;
+    --border: #413E3E;
+    --muted: #888888;
+    --dot: #d0cdc0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'NIXGONM-Vb', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0; padding: 0;
+    line-height: 1.6;
+}
+
+::selection {
+    background-color: var(--orange-light);
+    color: var(--black);
+}
+
+header {
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 50px 50px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+    font-size: clamp(1.3rem, 3vw, 1.9rem);
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--black);
+}
+
+header p {
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+main {
+    padding: 40px 50px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* ── Tabs ── */
+.mode-tabs {
+    display: flex;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    width: fit-content;
+}
+
+.tab-btn {
+    background: var(--bg);
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'NIXGONM-Vb', sans-serif;
+    font-size: 13px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tab-btn:last-child { border-right: none; }
+.tab-btn:hover { background: var(--orange-light); color: var(--black); }
+.tab-btn.active { background: var(--orange); color: #fff; font-weight: 700; }
+
+/* ── Grid ── */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    main { padding: 24px 20px; }
+    header { padding: 30px 20px 16px; }
+    .main-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Canvas ── */
+.canvas-wrap {
+    background: var(--bg);
+    border: 2px dotted var(--border);
+    padding: 20px;
+    position: relative;
+}
+
+.canvas-wrap::before {
+    content: 'canvas';
+    position: absolute;
+    top: -1px; left: 14px;
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 0 6px;
+    font-family: 'Fira Code', monospace;
+    line-height: 1;
+    letter-spacing: 0.08em;
+}
+
+#paxosCanvas {
+    display: block;
+    width: 100%;
+    background: var(--bg);
+}
+
+/* ── Phase badge ── */
+.phase-badge {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    font-family: 'Fira Code', monospace;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    background: var(--beige);
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.phase-badge.p2 { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+.phase-badge.p3 { background: var(--black); color: #fff; border-color: var(--black); }
+
+/* ── Controls ── */
+.controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'NIXGONM-Vb', sans-serif;
+    font-size: 12px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn:hover { background: var(--beige); }
+.btn.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+.btn.primary:hover { background: #e05c00; }
+.btn.reset { border-style: dashed; }
+.btn.reset:hover { background: var(--orange-light); border-color: var(--orange); }
+
+.speed-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    font-family: 'Fira Code', monospace;
+}
+
+#speedSlider {
+    -webkit-appearance: none;
+    width: 70px; height: 2px;
+    background: var(--border);
+    outline: none;
+}
+
+#speedSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    background: var(--orange);
+    cursor: pointer;
+    border-radius: 0;
+}
+
+/* ── Side panel ── */
+.side-panel { display: flex; flex-direction: column; gap: 14px; }
+
+.panel-box {
+    border: 1px dotted var(--border);
+    padding: 14px 16px;
+    font-size: 12px;
+    background: var(--bg);
+    position: relative;
+}
+
+.panel-box h3 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 0 0 10px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px dotted var(--border);
+    font-weight: 400;
+    font-family: 'Fira Code', monospace;
+}
+
+/* ── Steps ── */
+.steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.steps-list::-webkit-scrollbar { width: 3px; }
+.steps-list::-webkit-scrollbar-thumb { background: var(--dot); }
+
+.step-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px 8px;
+    opacity: 0.3;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+
+.step-item.done { opacity: 0.55; }
+
+.step-item.active {
+    opacity: 1;
+    background: var(--orange-light);
+    border-left-color: var(--orange);
+    color: var(--black);
+}
+
+.step-item.active.p2 { background: var(--beige); border-left-color: var(--text); }
+.step-item.active.p3 { background: var(--black); color: #fff; border-left-color: var(--black); }
+
+.step-num {
+    font-size: 9px;
+    color: var(--muted);
+    min-width: 16px;
+    font-family: 'Fira Code', monospace;
+    padding-top: 2px;
+}
+
+/* ── Prop display ── */
+.prop-display { display: flex; flex-direction: column; gap: 5px; }
+
+.prop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    border: 1px solid var(--dot);
+    background: var(--beige);
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.prop-row.hi { border-color: var(--orange); background: var(--orange-light); }
+
+.prop-label { color: var(--muted); font-family: 'Fira Code', monospace; }
+.prop-val   { font-weight: 700; color: var(--black); font-family: 'Fira Code', monospace; }
+
+/* ── Legend ── */
+.legend { display: flex; flex-direction: column; gap: 6px; }
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.leg-dot  { width:10px; height:10px; border:2px solid; flex-shrink:0; }
+.leg-line { width:22px; height:2px; flex-shrink:0; }
+
+/* ── Log ── */
+.log-box {
+    background: var(--beige);
+    padding: 8px 10px;
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.9;
+    border: 1px dotted var(--dot);
+}
+
+.log-box::-webkit-scrollbar { width: 3px; }
+.log-box::-webkit-scrollbar-thumb { background: var(--dot); }
+
+.log-entry { color: var(--muted); }
+.log-entry.fresh { color: var(--black); }
+
+.log-entry .tag {
+    padding: 0px 4px;
+    font-size: 9px;
+    margin-right: 4px;
+    letter-spacing: 0.05em;
+    border: 1px solid;
+}
+
+.tag.prepare  { background: var(--beige);       color: var(--text);   border-color: var(--border); }
+.tag.promise  { background: #ede8fc;             color: #5b4fa8;       border-color: #a78bfa; }
+.tag.accept   { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+.tag.accepted { background: #e8f5e4;             color: #2d7a1f;       border-color: #7adb6b; }
+.tag.reject   { background: #fde8e8;             color: #cc0000;       border-color: #f66; }
+.tag.info     { background: var(--orange-light); color: #7a5c00;       border-color: #cca000; }
+
+/* ── Concept boxes ── */
+.concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.concept-box {
+    border: 1px dotted var(--border);
+    padding: 16px 18px;
+    position: relative;
+}
+
+.concept-box::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -1px; left: 14px;
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 0 5px;
+    font-family: 'Fira Code', monospace;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.concept-box h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--black);
+    margin: 0 0 8px 0;
+}
+
+.concept-box p {
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text);
+}
+
+.concept-box code {
+    background-color: var(--orange-light);
+    color: var(--black);
+    padding: 1px 5px;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    border: 1px solid var(--orange);
+    border-radius: 0;
+}
+
+/* ── Settings Controls ── */
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.settings-row label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Fira Code', monospace;
+}
+.settings-select {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    background: var(--beige);
+    border: 1px solid var(--border);
+    color: var(--black);
+    padding: 2px 4px;
+    border-radius: 2px;
+    outline: none;
+}
+.settings-select:focus {
+    border-color: var(--orange);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Paxos Consensus Algorithm</h1>
+  <p>Competing Proposers · 5 Acceptors · Intersection Conflict</p>
+</header>
+
+<main>
+  <div class="mode-tabs">
+    <button class="tab-btn active" id="tabSingle" onclick="setMode('single')">Single Proposer</button>
+    <button class="tab-btn" id="tabMulti" onclick="setMode('multi')">Competing Proposers</button>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Canvas side -->
+    <div>
+      <div id="phaseBadge" class="phase-badge">phase-1 :: prepare / promise</div>
+      <div class="canvas-wrap">
+        <canvas id="paxosCanvas" width="700" height="450"></canvas>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="playBtn" onclick="playPause()">▶ Play</button>
+        <button class="btn" onclick="stepForward()">Step →</button>
+        <button class="btn reset" onclick="resetAnim()">↺ Reset</button>
+        <div class="speed-wrap">
+          speed
+          <input type="range" id="speedSlider" min="0.3" max="3" step="0.1" value="1" oninput="setSpeed(this.value)">
+          <span id="speedLabel">1×</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info side -->
+    <div class="side-panel">
+      
+      <!-- NEW: Settings Panel -->
+      <div class="panel-box" id="settingsPanel" style="display:none;">
+        <h3>Settings</h3>
+        <div class="settings-row">
+          <label>Proposer P₁ N:</label>
+          <select id="prop1Select" class="settings-select" onchange="updatePropSettings()">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+        <div class="settings-row">
+          <label>Proposer P₂ N:</label>
+          <select id="prop2Select" class="settings-select" onchange="updatePropSettings()">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <h3>Protocol Steps</h3>
+        <div class="steps-list" id="stepsList"></div>
+      </div>
+      <div class="panel-box">
+        <h3>Proposal Numbers</h3>
+        <div class="prop-display" id="propDisplay"></div>
+      </div>
+      <div class="panel-box">
+        <h3>Legend</h3>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="panel-box">
+        <h3>Message Log</h3>
+        <div class="log-box" id="logBox"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Concept cards -->
+  <div class="concept-grid">
+    <div class="concept-box" data-label="topology">
+      <h3>5 Acceptors</h3>
+      <p>P₁ targets A₁, A₂, A₃. P₂ targets A₃, A₄, A₅. <br><strong>A₃ is the conflict point.</strong></p>
+    </div>
+    <div class="concept-box" data-label="phase 1">
+      <h3>Prepare / Promise</h3>
+      <p>Proposer broadcasts <code>Prepare(N)</code>. Acceptors reply <code>Promise(N)</code> only if N exceeds previously seen numbers.</p>
+    </div>
+    <div class="concept-box" data-label="phase 2">
+      <h3>Accept / Rejection</h3>
+      <p>If A₃ accepts P₁'s value, then receives P₂'s Prepare: <br>
+      If P₂ > P₁, A₃ rejects P₁ and promises P₂.<br>
+      If P₂ ≤ P₁, A₃ rejects P₂.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+// ═══════ THEME ═══════
+const T = {
+  bg:'#FFFFFF', beige:'#EDEBDF', text:'#413E3E', black:'#000000',
+  orange:'#ff6800', orangeLt:'#fff2cf', muted:'#888888', dot:'#d0cdc0',
+  purple:'#7c6fc4', green:'#3a8c2b', red:'#cc2222'
+};
+
+// ═══════ CANVAS ═══════
+const canvas = document.getElementById('paxosCanvas');
+const ctx    = canvas.getContext('2d');
+const W = 700, H = 450;
+canvas.width = W; canvas.height = H;
+
+// ═══════ STATE ═══════
+let mode='single', playing=false, speed=1, stepIndex=0;
+let animTimer=null, messages=[], pulses=[];
+let animRunning=false, raf=null, lastTime=0;
+let acceptorState={}, propState={}, consensusValue=null;
+let lay, scenario;
+const NR = 24; // Slightly smaller radius for 5 nodes
+
+// NEW: Proposal Number Settings
+let prop1N = 1;
+let prop2N = 1;
+
+// ═══════ LAYOUT ═══════
+function layout() {
+  if (mode==='single') return {
+    proposers:[{id:'P1',x:95, y:225,label:'P₁',color:T.orange,propN:5}],
+    acceptors:[
+      {id:'A1',x:355,y:120, label:'A₁',color:T.purple},
+      {id:'A2',x:435,y:225,label:'A₂',color:T.purple},
+      {id:'A3',x:355,y:330,label:'A₃',color:T.purple},
+    ],
+    learner:{id:'L1',x:625,y:225,label:'L',color:T.green}
+  };
+  
+  // 5 Acceptors Layout
+  return {
+    proposers:[
+      {id:'P1',x:80,y:120,label:'P₁',color:T.orange,propN:prop1N},
+      {id:'P2',x:80,y:330,label:'P₂',color:T.black, propN:prop2N},
+    ],
+    acceptors:[
+      {id:'A1',x:280,y:80,  label:'A₁',color:T.purple},
+      {id:'A2',x:350,y:150, label:'A₂',color:T.purple},
+      {id:'A3',x:350,y:225, label:'A₃',color:T.purple}, // CONFLICT POINT
+      {id:'A4',x:350,y:300, label:'A₄',color:T.purple},
+      {id:'A5',x:280,y:370, label:'A₅',color:T.purple},
+    ],
+    learner:{id:'L1',x:600,y:225,label:'L',color:T.green}
+  };
+}
+
+// ═══════ SCENARIOS ═══════
+function buildSingle(l) {
+  const [P]=l.proposers,[A1,A2,A3]=l.acceptors,L=l.learner;
+  return [
+    {phase:1,desc:'P₁ broadcasts Prepare(N=5) to all acceptors',msgs:[
+      {from:P,to:A1,label:'Prepare(5)',color:T.orange,delay:0},
+      {from:P,to:A2,label:'Prepare(5)',color:T.orange,delay:90},
+      {from:P,to:A3,label:'Prepare(5)',color:T.orange,delay:180},
+    ],propUpdate:{P1:'5 → sent'}},
+    {phase:1,desc:'Acceptors reply Promise(5) — none previously accepted',msgs:[
+      {from:A1,to:P,label:'Promise(5,∅)',color:T.purple,delay:0},
+      {from:A2,to:P,label:'Promise(5,∅)',color:T.purple,delay:90},
+      {from:A3,to:P,label:'Promise(5,∅)',color:T.purple,delay:180},
+    ],acceptorState:{A1:'N=5',A2:'N=5',A3:'N=5'}},
+    {phase:1,desc:'Quorum! 3/3 promises received → proceed to Phase 2',msgs:[],quorum:true},
+    {phase:2,desc:'P₁ sends Accept!(5,"v") to all acceptors',msgs:[
+      {from:P,to:A1,label:'Accept!(5,"v")',color:T.orange,delay:0},
+      {from:P,to:A2,label:'Accept!(5,"v")',color:T.orange,delay:90},
+      {from:P,to:A3,label:'Accept!(5,"v")',color:T.orange,delay:180},
+    ],propUpdate:{P1:'5 → accept'}},
+    {phase:2,desc:'Acceptors confirm Accepted(5,"v") to proposer & learner',msgs:[
+      {from:A1,to:P,label:'Accepted(5,"v")',color:T.green,delay:0},
+      {from:A2,to:P,label:'Accepted(5,"v")',color:T.green,delay:90},
+      {from:A3,to:P,label:'Accepted(5,"v")',color:T.green,delay:180},
+      {from:A1,to:L,label:'Accepted(5,"v")',color:T.green,delay:260},
+      {from:A2,to:L,label:'Accepted(5,"v")',color:T.green,delay:340},
+    ],acceptorState:{A1:'5:"v"',A2:'5:"v"',A3:'5:"v"'}},
+    {phase:3,desc:'CONSENSUS REACHED — value "v" chosen by quorum',msgs:[],consensus:true,consValue:'"v"'}
+  ];
+}
+
+function buildMulti(l) {
+  const [P1,P2]=l.proposers;
+  const [A1,A2,A3,A4,A5]=l.acceptors;
+  const L=l.learner;
+  const n1 = prop1N;
+  const n2 = prop2N;
+  
+  // Scenario Logic:
+  // P1 targets A1, A2, A3.
+  // P2 targets A3, A4, A5.
+  // If n2 > n1, P2 wins. A3 rejects P1's Accept.
+  // If n2 <= n1, P1 wins. A3 rejects P2's Prepare.
+  
+  if (n2 > n1) {
+    // ── SCENARIO A: P2 WINS (Higher Number) ──
+    return [
+      {phase:1,desc:`P₁ sends Prepare(N=${n1}) to A₁,A₂,A₃`,msgs:[
+        {from:P1,to:A1,label:`Prepare(${n1})`,color:T.orange,delay:0},
+        {from:P1,to:A2,label:`Prepare(${n1})`,color:T.orange,delay:90},
+        {from:P1,to:A3,label:`Prepare(${n1})`,color:T.orange,delay:180},
+      ],propUpdate:{P1:`${n1} → sent`,P2:`${n2} (waiting)`}},
+      
+      {phase:1,desc:`A₁,A₂,A₃ promise P₁`,msgs:[
+        {from:A1,to:P1,label:`Promise(${n1})`,color:T.purple,delay:0},
+        {from:A2,to:P1,label:`Promise(${n1})`,color:T.purple,delay:90},
+        {from:A3,to:P1,label:`Promise(${n1})`,color:T.purple,delay:180},
+      ],acceptorState:{A1:'N='+n1,A2:'N='+n1,A3:'N='+n1}},
+      
+      {phase:2,desc:`P₁ sends Accept!(${n1},"α") to A₁,A₂,A₃`,msgs:[
+        {from:P1,to:A1,label:`Accept!(${n1},"α")`,color:T.orange,delay:0},
+        {from:P1,to:A2,label:`Accept!(${n1},"α")`,color:T.orange,delay:90},
+        {from:P1,to:A3,label:`Accept!(${n1},"α")`,color:T.orange,delay:180},
+      ],propUpdate:{P1:`${n1} → sent`,P2:`${n2} (waiting)`}},
+
+      {phase:1,desc:`P₂ sends Prepare(N=${n2}) to A₃,A₄,A₅`,msgs:[
+        {from:P2,to:A3,label:`Prepare(${n2})`,color:T.black,delay:0},
+        {from:P2,to:A4,label:`Prepare(${n2})`,color:T.black,delay:90},
+        {from:P2,to:A5,label:`Prepare(${n2})`,color:T.black,delay:180},
+      ],propUpdate:{P1:`${n1} (sent)`,P2:`${n2} → sent`},interrupt:true},
+
+      {phase:1,desc:`A₄,A₅ promise P₂. A₃ rejects P₁'s Accept (N=${n2}>${n1})`,msgs:[
+        {from:A4,to:P2,label:`Promise(${n2})`,color:T.black,delay:0},
+        {from:A5,to:P2,label:`Promise(${n2})`,color:T.black,delay:90},
+        {from:A3,to:P2,label:`Promise(${n2},"α")`,color:T.black,delay:180},
+        {from:A3,to:P1,label:`Reject(${n2}>${n1})`,color:T.red,delay:260},
+      ],acceptorState:{A4:'N='+n2,A5:'N='+n2,A3:`N=${n2} (α)`}},
+
+      {phase:1,desc:`P₁ failed (A₃ rejected). P₂ has quorum (A₃,A₄,A₅)`,msgs:[],
+        propUpdate:{P1:`${n1} → FAILED`,P2:`${n2} → quorum!`},restart:true},
+
+      {phase:2,desc:`P₂ sends Accept!(${n2},"α") to A₃,A₄,A₅`,msgs:[
+        {from:P2,to:A3,label:`Accept!(${n2},"α")`,color:T.black,delay:0},
+        {from:P2,to:A4,label:`Accept!(${n2},"α")`,color:T.black,delay:90},
+        {from:P2,to:A5,label:`Accept!(${n2},"α")`,color:T.black,delay:180},
+      ],propUpdate:{P1:'FAILED',P2:`${n2} → accept "α"`}},
+
+      {phase:2,desc:`All confirm Accepted(${n2},"α")`,msgs:[
+        {from:A3,to:P2,label:`Accepted(${n2},"α")`,color:T.green,delay:0},
+        {from:A4,to:P2,label:`Accepted(${n2},"α")`,color:T.green,delay:90},
+        {from:A5,to:P2,label:`Accepted(${n2},"α")`,color:T.green,delay:180},
+        {from:A3,to:L, label:`Accepted(${n2},"α")`,color:T.green,delay:260},
+      ],acceptorState:{A3:`${n2}:"α"`,A4:`${n2}:"α"`,A5:`${n2}:"α"`}},
+
+      {phase:3,desc:`CONSENSUS — "α" chosen by P₂`,msgs:[],consensus:true,consValue:'"α"'}
+    ];
+
+  } else {
+    // ── SCENARIO B: P1 WINS (P2 <= P1) ──
+    return [
+      {phase:1,desc:`P₁ sends Prepare(N=${n1}) to A₁,A₂,A₃`,msgs:[
+        {from:P1,to:A1,label:`Prepare(${n1})`,color:T.orange,delay:0},
+        {from:P1,to:A2,label:`Prepare(${n1})`,color:T.orange,delay:90},
+        {from:P1,to:A3,label:`Prepare(${n1})`,color:T.orange,delay:180},
+      ],propUpdate:{P1:`${n1} → sent`,P2:`${n2} (waiting)`}},
+      
+      {phase:1,desc:`A₁,A₂,A₃ promise P₁`,msgs:[
+        {from:A1,to:P1,label:`Promise(${n1})`,color:T.purple,delay:0},
+        {from:A2,to:P1,label:`Promise(${n1})`,color:T.purple,delay:90},
+        {from:A3,to:P1,label:`Promise(${n1})`,color:T.purple,delay:180},
+      ],acceptorState:{A1:'N='+n1,A2:'N='+n1,A3:'N='+n1}},
+      
+      {phase:2,desc:`P₁ sends Accept!(${n1},"α") to A₁,A₂,A₃`,msgs:[
+        {from:P1,to:A1,label:`Accept!(${n1},"α")`,color:T.orange,delay:0},
+        {from:P1,to:A2,label:`Accept!(${n1},"α")`,color:T.orange,delay:90},
+        {from:P1,to:A3,label:`Accept!(${n1},"α")`,color:T.orange,delay:180},
+      ],propUpdate:{P1:`${n1} → sent`,P2:`${n2} (waiting)`}},
+
+      {phase:1,desc:`P₂ sends Prepare(N=${n2}) to A₃,A₄,A₅`,msgs:[
+        {from:P2,to:A3,label:`Prepare(${n2})`,color:T.black,delay:0},
+        {from:P2,to:A4,label:`Prepare(${n2})`,color:T.black,delay:90},
+        {from:P2,to:A5,label:`Prepare(${n2})`,color:T.black,delay:180},
+      ],propUpdate:{P1:`${n1} (sent)`,P2:`${n2} → sent`}},
+
+      {phase:1,desc:`A₄,A₅ promise P₂. A₃ REJECTS P₂ (N=${n2}≤${n1})`,msgs:[
+        {from:A4,to:P2,label:`Promise(${n2})`,color:T.black,delay:0},
+        {from:A5,to:P2,label:`Promise(${n2})`,color:T.black,delay:90},
+        {from:A3,to:P2,label:`Reject(${n2}≤${n1})`,color:T.red,delay:180},
+      ],propUpdate:{P1:`${n1} (sent)`,P2:`${n2} → FAILED`},reject:true},
+
+      {phase:2,desc:`P₁ gets quorum of Accepted(${n1},"α")`,msgs:[
+        {from:A1,to:P1,label:`Accepted(${n1},"α")`,color:T.green,delay:0},
+        {from:A2,to:P1,label:`Accepted(${n1},"α")`,color:T.green,delay:90},
+        {from:A3,to:P1,label:`Accepted(${n1},"α")`,color:T.green,delay:180},
+        {from:A3,to:L, label:`Accepted(${n1},"α")`,color:T.green,delay:260},
+      ],acceptorState:{A1:`${n1}:"α"`,A2:`${n1}:"α"`,A3:`${n1}:"α"`}},
+
+      {phase:3,desc:`CONSENSUS — "α" chosen by P₁`,msgs:[],consensus:true,consValue:'"α"'}
+    ];
+  }
+}
+
+// ═══════ INIT ═══════
+function init() {
+  lay = layout();
+  scenario = mode==='single' ? buildSingle(lay) : buildMulti(lay);
+  acceptorState={}; propState={};
+  lay.acceptors.forEach(a => acceptorState[a.id]='∅');
+  lay.proposers.forEach(p => propState[p.id]='N='+p.propN);
+  messages=[]; pulses=[]; stepIndex=0; playing=false; consensusValue=null;
+  clearLog(); buildStepsList(); buildLegend();
+  updatePropDisplay(); updateBadge(1); updatePlayBtn(); draw();
+  
+  // Update Settings UI visibility
+  document.getElementById('settingsPanel').style.display = (mode === 'multi') ? 'block' : 'none';
+}
+
+// ── Settings Update ──
+function updatePropSettings() {
+  const s1 = parseInt(document.getElementById('prop1Select').value);
+  const s2 = parseInt(document.getElementById('prop2Select').value);
+  
+  if(s1 !== prop1N || s2 !== prop2N) {
+    prop1N = s1;
+    prop2N = s2;
+    resetAnim();
+  }
+}
+
+function populateSelects() {
+  const opts = [];
+  for(let i=1; i<=10; i++) opts.push(`<option value="${i}">${i}</option>`);
+  document.getElementById('prop1Select').innerHTML = opts.join('');
+  document.getElementById('prop2Select').innerHTML = opts.join('');
+  
+  // Set defaults to current values
+  document.getElementById('prop1Select').value = prop1N;
+  document.getElementById('prop2Select').value = prop2N;
+}
+
+// ═══════ UI ═══════
+function buildStepsList() {
+  document.getElementById('stepsList').innerHTML =
+    scenario.map((s,i)=>
+      `<div class="step-item" id="step-${i}">
+         <span class="step-num">${String(i+1).padStart(2,'0')}</span>
+         <span>${s.desc}</span>
+       </div>`
+    ).join('');
+}
+
+function updateStepsList() {
+  scenario.forEach((_,i)=>{
+    const el=document.getElementById('step-'+i); if(!el)return;
+    el.className='step-item'+(i<stepIndex?' done':'');
+    if(i===stepIndex){
+      const ph=scenario[i].phase;
+      el.className='step-item active'+(ph===2?' p2':ph===3?' p3':'');
+      el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+}
+
+function buildLegend() {
+  const items=[
+    {dot:true,color:T.orange,label:'Proposer P₁'},
+    ...(mode==='multi'?[{dot:true,color:T.black,label:'Proposer P₂'}]:[]),
+    {dot:true,color:T.purple,label:'Acceptor'},
+    {dot:true,color:T.green, label:'Learner'},
+    {dot:false,color:T.orange,label:'Prepare →'},
+    {dot:false,color:T.purple,label:'Promise ←'},
+    {dot:false,color:T.green, label:'Accepted ←'},
+    {dot:false,color:T.red,   label:'Reject ←'},
+  ];
+  document.getElementById('legend').innerHTML = items.map(it=>
+    it.dot
+      ? `<div class="legend-item"><div class="leg-dot" style="border-color:${it.color};background:${it.color}22"></div>${it.label}</div>`
+      : `<div class="legend-item"><div class="leg-line" style="background:${it.color}"></div>${it.label}</div>`
+  ).join('');
+}
+
+function updatePropDisplay() {
+  let html='';
+  lay.proposers.forEach(p=>{
+    const v=propState[p.id]||'N='+p.propN;
+    const hi=v.includes('sent')||v.includes('accept')||v.includes('quorum');
+    html+=`<div class="prop-row ${hi?'hi':''}">
+      <span class="prop-label">${p.label}</span>
+      <span class="prop-val">${v}</span>
+    </div>`;
+  });
+  lay.acceptors.forEach(a=>{
+    html+=`<div class="prop-row">
+      <span class="prop-label">${a.label} promised</span>
+      <span class="prop-val">${acceptorState[a.id]||'∅'}</span>
+    </div>`;
+  });
+  document.getElementById('propDisplay').innerHTML=html;
+}
+
+function updateBadge(ph) {
+  const b=document.getElementById('phaseBadge');
+  b.className='phase-badge'+(ph===2?' p2':ph===3?' p3':'');
+  b.textContent=ph===1?'phase-1 :: prepare / promise':ph===2?'phase-2 :: accept / accepted':'consensus :: ✓ done';
+}
+
+// ═══════ LOG ═══════
+let logEntries=[];
+function clearLog(){logEntries=[];renderLog();}
+function addLog(tag,text,cls){
+  logEntries.unshift({tag,text,cls,fresh:true});
+  if(logEntries.length>40)logEntries.pop();
+  renderLog();
+  setTimeout(()=>{logEntries.forEach(e=>e.fresh=false);renderLog();},500);
+}
+function renderLog(){
+  document.getElementById('logBox').innerHTML=
+    logEntries.map(e=>`<div class="log-entry ${e.fresh?'fresh':''}"><span class="tag ${e.cls}">${e.tag}</span>${e.text}</div>`).join('');
+}
+
+// ═══════ ANIMATION ═══════
+function startLoop(){
+  if(animRunning)return; animRunning=true;
+  function loop(ts){
+    const dt=ts-lastTime; lastTime=ts;
+    updateMsgs(dt); updatePulses(dt); draw();
+    if(messages.length||pulses.length) raf=requestAnimationFrame(loop);
+    else{animRunning=false;raf=null;}
+  }
+  raf=requestAnimationFrame(loop);
+}
+
+function eio(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
+
+function spawnMsgs(step){
+  if(!step.msgs?.length)return;
+  step.msgs.forEach(m=>{
+    setTimeout(()=>{
+      messages.push({from:m.from,to:m.to,x:m.from.x,y:m.from.y,
+        label:m.label,color:m.color,progress:0,spd:0.0014*speed,done:false});
+      const tag=m.label.startsWith('Prepare')?'PREPARE':
+                m.label.startsWith('Promise')?'PROMISE':
+                m.label.startsWith('Accept!')?'ACCEPT':
+                m.label.startsWith('Accepted')?'ACCEPTED':'REJECT';
+      addLog(tag,` ${m.from.label}→${m.to.label}: ${m.label}`,tag.toLowerCase());
+      startLoop();
+    }, m.delay/speed);
+  });
+}
+
+function updateMsgs(dt){
+  messages.forEach(m=>{
+    if(m.done)return;
+    m.progress+=m.spd*dt;
+    if(m.progress>=1){
+      m.progress=1;m.done=true;m.x=m.to.x;m.y=m.to.y;
+      addPulse(m.to.x,m.to.y,m.color);
+    }else{
+      m.x=m.from.x+(m.to.x-m.from.x)*eio(m.progress);
+      m.y=m.from.y+(m.to.y-m.from.y)*eio(m.progress);
+    }
+  });
+  messages=messages.filter(m=>!m.done);
+}
+
+function addPulse(x,y,color){pulses.push({x,y,color,r:0,alpha:0.9,done:false});}
+
+function updatePulses(dt){
+  pulses.forEach(p=>{p.r+=0.06*dt;p.alpha-=0.0025*dt;if(p.r>=28||p.alpha<=0)p.done=true;});
+  pulses=pulses.filter(p=>!p.done);
+}
+
+// ═══════ DRAW ═══════
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=T.bg; ctx.fillRect(0,0,W,H);
+
+  // Dot grid
+  ctx.fillStyle=T.dot;
+  for(let x=18;x<W;x+=22) for(let y=18;y<H;y+=22){
+    ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
+  }
+
+  // Connections
+  lay.proposers.forEach(p=>lay.acceptors.forEach(a=>faintLine(p,a)));
+  lay.acceptors.forEach(a=>faintLine(a,lay.learner));
+
+  // Pulses
+  pulses.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.strokeStyle=rgba(p.color,p.alpha);ctx.lineWidth=1.5;ctx.stroke();
+  });
+
+  // Consensus glow
+  if(consensusValue){
+    [...lay.proposers,...lay.acceptors,lay.learner].forEach(n=>{
+      ctx.beginPath();ctx.arc(n.x,n.y,NR+10,0,Math.PI*2);
+      ctx.fillStyle=rgba(T.green,0.1);ctx.fill();
+    });
+  }
+
+  messages.forEach(drawMsg);
+  [...lay.proposers,...lay.acceptors,lay.learner].forEach(drawNode);
+  if(consensusValue)drawBanner();
+}
+
+function faintLine(a,b){
+  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+  ctx.strokeStyle=T.dot;ctx.lineWidth=1;
+  ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+}
+
+function drawMsg(m){
+  const angle=Math.atan2(m.to.y-m.from.y,m.to.x-m.from.x);
+  const sx=m.from.x+Math.cos(angle)*NR, sy=m.from.y+Math.sin(angle)*NR;
+
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(m.x,m.y);
+  ctx.strokeStyle=rgba(m.color,0.35);ctx.lineWidth=1.5;ctx.stroke();
+
+  ctx.beginPath();ctx.arc(m.x,m.y,4,0,Math.PI*2);
+  ctx.fillStyle=m.color;ctx.fill();
+  ctx.strokeStyle=T.bg;ctx.lineWidth=1.5;ctx.stroke();
+
+  // Label box
+  const lx=(sx+m.x)/2, ly=(sy+m.y)/2;
+  const perp={x:-Math.sin(angle)*14,y:Math.cos(angle)*14};
+  ctx.font='8px Fira Code,monospace';
+  const tw=ctx.measureText(m.label).width;
+  const bx=lx+perp.x-tw/2-4, by=ly+perp.y-7;
+  ctx.fillStyle=T.orangeLt;   ctx.fillRect(bx,by,tw+8,13);
+  ctx.strokeStyle=m.color;    ctx.lineWidth=0.8;ctx.strokeRect(bx,by,tw+8,13);
+  ctx.fillStyle=T.black;      ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(m.label,lx+perp.x,ly+perp.y+0.5);
+}
+
+function drawNode(n){
+  const isL=n.id==='L1', isP=n.id.startsWith('P');
+
+  // Fill
+  ctx.beginPath();
+  if(isL) sqPath(n.x,n.y,NR); else ctx.arc(n.x,n.y,NR,0,Math.PI*2);
+  ctx.fillStyle=rgba(n.color,0.07); ctx.fill();
+
+  // Border
+  ctx.beginPath();
+  if(isL) sqPath(n.x,n.y,NR); else ctx.arc(n.x,n.y,NR,0,Math.PI*2);
+  ctx.strokeStyle=n.color; ctx.lineWidth=1.8;
+  if(!isP&&!isL) ctx.setLineDash([4,3]);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle=n.color;
+  ctx.font='bold 12px NIXGONM-Vb,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(n.label,n.x,n.y-(acceptorState[n.id]&&acceptorState[n.id]!=='∅'?4:0));
+
+  // Acceptor state
+  if(acceptorState[n.id]&&acceptorState[n.id]!=='∅'){
+    ctx.fillStyle=rgba(T.black,0.5);
+    ctx.font='7.5px Fira Code,monospace';
+    ctx.fillText(acceptorState[n.id],n.x,n.y+10);
+  }
+
+  // Proposal N badge
+  const pr=lay.proposers.find(p=>p.id===n.id);
+  if(pr){
+    const bx=n.x+NR-5,by=n.y-NR+5;
+    ctx.fillStyle=T.bg;ctx.strokeStyle=n.color;ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(bx,by,11,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle=n.color;ctx.font='bold 8px Fira Code,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('N='+pr.propN,bx,by);
+  }
+
+  // Type label
+  ctx.fillStyle=rgba(T.muted,0.8);
+  ctx.font='9px NIXGONM-Vb,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(isL?'Learner':isP?'Proposer':'Acceptor',n.x,n.y+NR+13);
+}
+
+function drawBanner(){
+  const bw=230,bh=48,bx=W/2-bw/2,by=H/2-bh/2;
+  ctx.fillStyle='rgba(255,255,255,0.95)';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle=T.black;ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle=T.orange;ctx.fillRect(bx,by,bw,4);
+  ctx.fillStyle=T.black;ctx.font='bold 12px NIXGONM-Vb,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✓ consensus: '+consensusValue,W/2,by+24);
+  ctx.fillStyle=T.muted;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('agreed by quorum',W/2,by+39);
+}
+
+function sqPath(x,y,r){ctx.rect(x-r,y-r,r*2,r*2);}
+
+function rgba(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ═══════ CONTROL ═══════
+function executeStep(i){
+  if(i>=scenario.length){playing=false;updatePlayBtn();return;}
+  const s=scenario[i];
+  updateBadge(s.phase);updateStepsList();
+  if(s.acceptorState)Object.assign(acceptorState,s.acceptorState);
+  if(s.propUpdate)Object.assign(propState,s.propUpdate);
+  updatePropDisplay();
+  if(s.consensus){consensusValue=s.consValue;draw();playing=false;updatePlayBtn();
+    addLog('INFO',' Consensus: '+s.consValue,'info');return;}
+  if(s.interrupt||s.restart||s.quorum||s.reject)addLog('INFO',' '+s.desc,'info');
+  spawnMsgs(s);
+}
+
+function stepForward(){
+  if(stepIndex>=scenario.length)return;
+  executeStep(stepIndex++);
+  if(playing)scheduleNext();
+}
+
+function scheduleNext(){
+  if(!playing)return;
+  animTimer=setTimeout(()=>{
+    if(playing&&stepIndex<scenario.length)stepForward();
+    else{playing=false;updatePlayBtn();}
+  }, messages.length?1500/speed:900/speed);
+}
+
+function playPause(){
+  playing=!playing;updatePlayBtn();
+  if(playing)scheduleNext();else clearTimeout(animTimer);
+}
+
+function updatePlayBtn(){document.getElementById('playBtn').textContent=playing?'⏸ Pause':'▶ Play';}
+
+function resetAnim(){
+  playing=false;updatePlayBtn();clearTimeout(animTimer);
+  if(raf){cancelAnimationFrame(raf);raf=null;animRunning=false;}
+  init();
+}
+
+function setSpeed(v){
+  speed=parseFloat(v);
+  document.getElementById('speedLabel').textContent=speed.toFixed(1)+'×';
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('tabSingle').className='tab-btn'+(m==='single'?' active':'');
+  document.getElementById('tabMulti').className='tab-btn'+(m==='multi'?' active':'');
+  resetAnim();
+}
+
+// ═══════ RESIZE ═══════
+function resizeCanvas(){
+  const w=canvas.parentElement.clientWidth-40;
+  canvas.style.width=w+'px';
+  canvas.style.height=(H*w/W)+'px';
+}
+window.addEventListener('resize',resizeCanvas);
+
+// Initialize Selects
+populateSelects();
+
+init();
+resizeCanvas();
+</script>
+</body>
+</html>
+
