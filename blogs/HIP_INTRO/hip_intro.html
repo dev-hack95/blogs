@@ -463,42 +463,45 @@
 
         <pre class="line-numbers">
             <code class="language-cpp">
-                template "<"const uint BLOCKSIZE = 32, typename T">"
-                __global__ void matmulKernel3(T const* A, T const* B, T* C, uint M, uint N, uint K) {
-                    const uint cRow = blockIdx.x;
-                    const uint cCol = blockIdx.y;
-                
-                    __shared__ float As[BLOCKSIZE * BLOCKSIZE];
-                    __shared__ float Bs[BLOCKSIZE * BLOCKSIZE];
-                
-                    int threadCol = threadIdx.x % BLOCKSIZE;
-                    int threadRow = threadIdx.x / BLOCKSIZE;
-                
-                    A += cRow * BLOCKSIZE * K;
-                    B += cCol * BLOCKSIZE;                        
-                    C += cRow * BLOCKSIZE * N + cCol * BLOCKSIZE; 
-                
+                template <const uint BLOCKSIZE = 32, typename T>
+                __global__ void matmulKernel3(
+                                                T const* A,
+                                                T const* B,
+                                                T* C,
+                                                uint M,
+                                                uint N,
+                                                uint K)
+                {
+                    const uint row = blockIdx.y * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
+                    const uint col = blockIdx.x * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+
+                    const uint localIdx = threadIdx.x;
+                    const uint threadRow = localIdx / BLOCKSIZE;
+                    const uint threadCol = localIdx % BLOCKSIZE;
+
+                    __shared__ T As[BLOCKSIZE * BLOCKSIZE];
+                    __shared__ T Bs[BLOCKSIZE * BLOCKSIZE];
+
                     float sum = 0.0;
-                
+
                     for (int bkIdx = 0; bkIdx < K; bkIdx += BLOCKSIZE) {
-                        As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * K + threadCol];
-                        Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * N + threadCol];
-                
+                        As[threadRow * BLOCKSIZE + threadCol] = A[row * K + (bkIdx + threadCol)];
+                        Bs[threadRow * BLOCKSIZE + threadCol] = B[(bkIdx + threadRow) * N + col];
+
                         __syncthreads();
-                
-                        A += BLOCKSIZE;
-                        B += BLOCKSIZE * N;
-                
-                        for (int dotIdx = 0; dotIdx < BLOCKSIZE; ++dotIdx) {
-                            sum += As[threadRow * BLOCKSIZE + dotIdx] * Bs[dotIdx  * BLOCKSIZE + threadCol];
+
+                        #pragma unroll
+                        for (int k = 0; k < BLOCKSIZE; ++k) {
+                            sum += As[threadRow * BLOCKSIZE + k] * Bs[k * BLOCKSIZE + threadCol];
                         }
-                
+
                         __syncthreads();
                     }
-                
-                    C[threadRow * N + threadCol] = sum;
-                
+                    if (row < M && col < N) {
+                        C[row * N + col] = (T)sum;
+                    }
                 }
+                
             </code>
         </pre>
 
