@@ -144,9 +144,7 @@
         <p>
             At the API level, developers use <em style="text-decoration: underline">io.async()</em> to spawn tasks and <em style="text-decoration: underline">Future.await()</em> to retrieve results. 
             Crucially, <em style="text-decoration: underline">io.async</em> only expresses <em style="text-decoration: underline">asynchrony</em>: it states that operations can be reordered or executed 
-            out-of-order without breaking correctness. It does <em>not</em> mandate true concurrency. If simultaneous execution is 
-            required, Zig provides <em style="text-decoration: underline">io.asyncConcurrent()</em>. This distinction prevents common pitfalls where single-threaded 
-            blocking I/O would deadlock when misused with async primitives.
+            out-of-order without breaking correctness. It does <em>not</em> mandate true concurrency.
         </p>
         
         <p>
